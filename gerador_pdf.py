@@ -43,7 +43,7 @@ def main():
     base = db.read(query)
 
     # Caminho completo para o documento .docx
-    exemplo_pdf = "ORIENTAÇÕES PARA AUDIÊNCIA.docx"
+    exemplo_pdf = "DOCUMENTO_EXEMPLO"
 
     # Manipular o documento .docx
     documento = Document(exemplo_pdf)
