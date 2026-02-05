@@ -14,60 +14,40 @@ document.addEventListener('DOMContentLoaded', function () {
         mask: '00000-000'
     });
 
-    // RG pode variar muito, vamos permitir números e alguns caracteres comuns
-    // Mas geralmente RG não tem padrão nacional fixo como CPF.
-    // Vamos deixar livre ou usar uma máscara genérica se necessário.
-    // Aqui optamos por não mascarar estritamente o RG para evitar bloqueios indevidos, 
-    // pois cada estado tem um formato.
-
     // --- Contagem de Caracteres ---
     const obsInput = document.getElementById('observacao');
     const charCount = document.getElementById('charCount');
     
-    obsInput.addEventListener('input', function() {
-        charCount.textContent = this.value.length;
-    });
+    if (obsInput) {
+        obsInput.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+        });
+    }
 
     // --- Validação de CPF ---
     function validarCPF(cpf) {
         cpf = cpf.replace(/[^\d]+/g, '');
         if (cpf == '') return false;
-        // Elimina CPFs invalidos conhecidos
-        if (cpf.length != 11 ||
-            cpf == "00000000000" ||
-            cpf == "11111111111" ||
-            cpf == "22222222222" ||
-            cpf == "33333333333" ||
-            cpf == "44444444444" ||
-            cpf == "55555555555" ||
-            cpf == "66666666666" ||
-            cpf == "77777777777" ||
-            cpf == "88888888888" ||
-            cpf == "99999999999")
-            return false;
-        // Valida 1o digito
+        if (cpf.length != 11 || cpf == cpf[0] * 11) return false;
+        
+        let add = 0;
+        for (i = 0; i < 9; i++) add += parseInt(cpf.charAt(i)) * (10 - i);
+        let rev = 11 - (add % 11);
+        if (rev == 10 || rev == 11) rev = 0;
+        if (rev != parseInt(cpf.charAt(9))) return false;
+        
         add = 0;
-        for (i = 0; i < 9; i++)
-            add += parseInt(cpf.charAt(i)) * (10 - i);
+        for (i = 0; i < 10; i++) add += parseInt(cpf.charAt(i)) * (11 - i);
         rev = 11 - (add % 11);
-        if (rev == 10 || rev == 11)
-            rev = 0;
-        if (rev != parseInt(cpf.charAt(9)))
-            return false;
-        // Valida 2o digito
-        add = 0;
-        for (i = 0; i < 10; i++)
-            add += parseInt(cpf.charAt(i)) * (11 - i);
-        rev = 11 - (add % 11);
-        if (rev == 10 || rev == 11)
-            rev = 0;
-        if (rev != parseInt(cpf.charAt(10)))
-            return false;
+        if (rev == 10 || rev == 11) rev = 0;
+        if (rev != parseInt(cpf.charAt(10))) return false;
+        
         return true;
     }
 
     // --- Validação de Idade ---
     function isMaiorDeIdade(dateString) {
+        if (!dateString) return false;
         const today = new Date();
         const birthDate = new Date(dateString);
         let age = today.getFullYear() - birthDate.getFullYear();
@@ -113,6 +93,63 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!form.checkValidity() || !isValid) {
             event.preventDefault();
             event.stopPropagation();
+        } else {
+            // Verifica se está rodando no Desktop (PyWebView)
+            if (window.pywebview) {
+                event.preventDefault(); // Impede o submit normal
+                
+                // Coleta dados
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => data[key] = value);
+
+                // Feedback visual de carregamento
+                Swal.fire({
+                    title: 'Processando...',
+                    text: 'Aguarde enquanto geramos seu PDF.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Chama API Python
+                window.pywebview.api.gerar_pdf_desktop(data).then(response => {
+                    if (response.status === 'success') {
+                        Swal.fire({
+                            title: 'Sucesso!',
+                            text: `PDF salvo com sucesso em:\n${response.path}`,
+                            icon: 'success',
+                            confirmButtonColor: '#0d6efd'
+                        });
+                    } else if (response.status === 'error') {
+                         Swal.fire({
+                            title: 'Erro!',
+                            html: response.messages.join('<br>'),
+                            icon: 'error',
+                            confirmButtonColor: '#d33'
+                        });
+                    } else if (response.status === 'cancelled') {
+                        Swal.close(); // Fecha o loading se cancelado
+                    }
+                }).catch(err => {
+                    Swal.fire({
+                        title: 'Erro Crítico',
+                        text: 'Falha na comunicação com a aplicação desktop.',
+                        icon: 'error'
+                    });
+                });
+            } else {
+                // Modo Web: Submit normal
+                Swal.fire({
+                    title: 'Gerando PDF!',
+                    text: 'Seu download começará em instantes.',
+                    icon: 'success',
+                    timer: 4000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            }
         }
 
         form.classList.add('was-validated');
@@ -120,23 +157,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Limpar validação customizada ao digitar
     ['cpf', 'data_nascimento', 'email_confirmacao'].forEach(id => {
-        document.getElementById(id).addEventListener('input', function() {
-            this.setCustomValidity('');
-        });
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function() {
+                this.setCustomValidity('');
+            });
+        }
     });
 
     // --- LocalStorage (Salvar Rascunho) ---
     const btnSalvar = document.getElementById('btnSalvarRascunho');
     
-    btnSalvar.addEventListener('click', function() {
-        const formData = new FormData(form);
-        const data = {};
-        formData.forEach((value, key) => {
-            data[key] = value;
+    if (btnSalvar) {
+        btnSalvar.addEventListener('click', function() {
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            localStorage.setItem('formRascunho', JSON.stringify(data));
+            
+            Swal.fire({
+                title: 'Sucesso!',
+                text: 'Rascunho salvo com sucesso!',
+                icon: 'success',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#0d6efd'
+            });
         });
-        localStorage.setItem('formRascunho', JSON.stringify(data));
-        alert('Rascunho salvo com sucesso!');
-    });
+    }
 
     // Carregar Rascunho
     const rascunho = localStorage.getItem('formRascunho');
@@ -144,14 +193,14 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const data = JSON.parse(rascunho);
             Object.keys(data).forEach(key => {
-                const input = form.elements[key];
-                if (input) {
+                if (form.elements[key]) {
+                    const input = form.elements[key];
                     input.value = data[key];
                     // Atualizar máscaras se necessário
                     if (key === 'cpf') cpfMask.value = data[key];
                     if (key === 'telefone') phoneMask.value = data[key];
                     if (key === 'cep') cepMask.value = data[key];
-                    if (key === 'observacao') charCount.textContent = data[key].length;
+                    if (key === 'observacao' && charCount) charCount.textContent = data[key].length;
                 }
             });
         } catch (e) {
@@ -160,16 +209,71 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- Botão Limpar ---
-    document.getElementById('btnLimpar').addEventListener('click', function() {
-        if(confirm('Tem certeza que deseja limpar todo o formulário?')) {
-            form.reset();
-            form.classList.remove('was-validated');
-            localStorage.removeItem('formRascunho');
-            charCount.textContent = '0';
-            // Limpar máscaras
-            cpfMask.value = '';
-            phoneMask.value = '';
-            cepMask.value = '';
+    const btnLimpar = document.getElementById('btnLimpar');
+    if (btnLimpar) {
+        btnLimpar.addEventListener('click', function() {
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Deseja limpar todo o formulário? Esta ação não pode ser desfeita.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, limpar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    localStorage.removeItem('formRascunho');
+                    if (charCount) charCount.textContent = '0';
+                    // Limpar máscaras
+                    cpfMask.value = '';
+                    phoneMask.value = '';
+                    cepMask.value = '';
+                    
+                    Swal.fire(
+                        'Limpo!',
+                        'O formulário foi reiniciado.',
+                        'success'
+                    );
+                }
+            });
+        });
+    }
+
+    // --- Modo Desktop: Histórico ---
+    // Este evento é disparado quando o pywebview está pronto
+    window.addEventListener('pywebviewready', function() {
+        const btnHistorico = document.getElementById('btnHistorico');
+        if (btnHistorico) {
+            btnHistorico.style.display = 'inline-block';
+            
+            btnHistorico.addEventListener('click', function() {
+                window.pywebview.api.obter_historico().then(historico => {
+                    const tbody = document.getElementById('historicoTbody');
+                    tbody.innerHTML = '';
+                    
+                    if (historico.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum registro encontrado.</td></tr>';
+                    } else {
+                        historico.forEach(reg => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${reg.data}</td>
+                                <td>${reg.nome}</td>
+                                <td>${reg.cpf}</td>
+                                <td class="text-truncate" style="max-width: 200px;" title="${reg.arquivo}">${reg.arquivo}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('historicoModal'));
+                    modal.show();
+                });
+            });
         }
     });
+
 });

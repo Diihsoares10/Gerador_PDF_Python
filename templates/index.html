@@ -38,21 +38,15 @@
 <body>
     <div class="container">
         <div class="card">
-            <div class="card-header text-center py-3">
-                <h2 class="mb-0"><i class="fas fa-file-alt me-2"></i>Formulário de Cadastro</h2>
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h2 class="mb-0 h4"><i class="fas fa-file-alt me-2"></i>Formulário de Cadastro</h2>
+                <button id="btnHistorico" type="button" class="btn btn-light btn-sm" style="display: none;">
+                    <i class="fas fa-history me-1"></i> Histórico
+                </button>
             </div>
             <div class="card-body p-4">
                 
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+                <!-- Mensagens Flash removidas daqui pois agora usam SweetAlert2 -->
 
                 <form id="cadastroForm" action="/" method="POST" novalidate>
                     
@@ -196,9 +190,64 @@
         </div>
     </div>
 
+    <!-- Modal de Histórico -->
+    <div class="modal fade" id="historicoModal" tabindex="-1" aria-labelledby="historicoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="historicoModalLabel">Histórico de PDFs Gerados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Nome</th>
+                                    <th>CPF</th>
+                                    <th>Arquivo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historicoTbody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/imask/6.4.3/imask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/static/js/script.js"></script>
+    
+    <!-- Integração de Flash Messages com SweetAlert2 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        // Mapeamento de categorias do Flask para ícones do SweetAlert
+                        var category = '{{ category }}';
+                        if (category === 'danger') category = 'error';
+                        
+                        Swal.fire({
+                            icon: category,
+                            title: 'Atenção',
+                            text: {{ message | tojson }},
+                            confirmButtonColor: '#0d6efd'
+                        });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+    </script>
 </body>
 </html>
