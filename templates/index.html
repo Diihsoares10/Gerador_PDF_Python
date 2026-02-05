@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Cadastro Profissional</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 900px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            background-color: #0d6efd;
+            color: white;
+            font-weight: bold;
+        }
+        .form-label.required::after {
+            content: " *";
+            color: red;
+        }
+        .is-invalid + .invalid-feedback {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header text-center py-3">
+                <h2 class="mb-0"><i class="fas fa-file-alt me-2"></i>Formulário de Cadastro</h2>
+            </div>
+            <div class="card-body p-4">
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form id="cadastroForm" action="/" method="POST" novalidate>
+                    
+                    <!-- Seção: Dados Pessoais -->
+                    <fieldset class="mb-4">
+                        <legend class="h5 border-bottom pb-2 text-primary">Dados Pessoais</legend>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="nome" class="form-label required">Nome Completo</label>
+                                <input type="text" class="form-control" id="nome" name="nome" minlength="3" required>
+                                <div class="invalid-feedback">Digite o nome completo (mínimo 3 caracteres).</div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="cpf" class="form-label required">CPF</label>
+                                <input type="text" class="form-control" id="cpf" name="cpf" placeholder="000.000.000-00" required>
+                                <div class="invalid-feedback">CPF inválido.</div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="rg" class="form-label required">RG</label>
+                                <input type="text" class="form-control" id="rg" name="rg" required>
+                                <div class="invalid-feedback">RG é obrigatório.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="data_nascimento" class="form-label required">Data de Nascimento</label>
+                                <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" required>
+                                <div class="invalid-feedback">Você deve ser maior de 18 anos.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="genero" class="form-label required">Gênero</label>
+                                <select class="form-select" id="genero" name="genero" required>
+                                    <option value="" selected disabled>Selecione...</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Feminino">Feminino</option>
+                                    <option value="Outro">Outro</option>
+                                    <option value="Prefiro não dizer">Prefiro não dizer</option>
+                                </select>
+                                <div class="invalid-feedback">Selecione uma opção.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="estado_civil" class="form-label">Estado Civil</label>
+                                <select class="form-select" id="estado_civil" name="estado_civil">
+                                    <option value="" selected disabled>Selecione...</option>
+                                    <option value="Solteiro">Solteiro</option>
+                                    <option value="Casado">Casado</option>
+                                    <option value="Divorciado">Divorciado</option>
+                                    <option value="Viúvo">Viúvo</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="nome_mae" class="form-label">Nome da Mãe</label>
+                                <input type="text" class="form-control" id="nome_mae" name="nome_mae">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="profissao" class="form-label">Profissão</label>
+                                <input type="text" class="form-control" id="profissao" name="profissao">
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Seção: Contato -->
+                    <fieldset class="mb-4">
+                        <legend class="h5 border-bottom pb-2 text-primary">Contato</legend>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label required">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="invalid-feedback">Email inválido.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email_confirmacao" class="form-label required">Confirmar Email</label>
+                                <input type="email" class="form-control" id="email_confirmacao" name="email_confirmacao" required>
+                                <div class="invalid-feedback">Os emails não coincidem.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefone" class="form-label">Telefone Celular</label>
+                                <input type="text" class="form-control" id="telefone" name="telefone" placeholder="(00) 00000-0000">
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Seção: Endereço -->
+                    <fieldset class="mb-4">
+                        <legend class="h5 border-bottom pb-2 text-primary">Endereço</legend>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="cep" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="cep" name="cep" placeholder="00000-000">
+                            </div>
+                            <div class="col-md-7">
+                                <label for="logradouro" class="form-label">Logradouro</label>
+                                <input type="text" class="form-control" id="logradouro" name="logradouro">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="numero" class="form-label">Número</label>
+                                <input type="text" class="form-control" id="numero" name="numero">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="complemento" class="form-label">Complemento</label>
+                                <input type="text" class="form-control" id="complemento" name="complemento">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="bairro" class="form-label">Bairro</label>
+                                <input type="text" class="form-control" id="bairro" name="bairro">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="cidade" class="form-label">Cidade</label>
+                                <input type="text" class="form-control" id="cidade" name="cidade">
+                            </div>
+                            <div class="col-md-1">
+                                <label for="estado" class="form-label">UF</label>
+                                <input type="text" class="form-control" id="estado" name="estado" maxlength="2">
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Seção: Outros -->
+                    <fieldset class="mb-4">
+                        <legend class="h5 border-bottom pb-2 text-primary">Outros</legend>
+                        <div class="mb-3">
+                            <label for="observacao" class="form-label required">Observação</label>
+                            <textarea class="form-control" id="observacao" name="observacao" rows="4" maxlength="500" required></textarea>
+                            <div class="form-text text-end"><span id="charCount">0</span>/500</div>
+                            <div class="invalid-feedback">Campo obrigatório (máx 500 caracteres).</div>
+                        </div>
+                    </fieldset>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2" id="btnLimpar">Limpar</button>
+                        <button type="button" class="btn btn-info me-md-2 text-white" id="btnSalvarRascunho">Salvar Rascunho</button>
+                        <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-file-pdf me-2"></i>Gerar PDF</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/imask/6.4.3/imask.min.js"></script>
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

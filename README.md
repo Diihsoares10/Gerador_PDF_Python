@@ -1,53 +1,47 @@
-Gerador de PDF a partir de documentos DOCX em Python
-Este é um projeto Python que oferece uma solução simples e eficaz para gerar arquivos PDF a partir de documentos DOCX. O objetivo é fornecer uma ferramenta leve e fácil de usar para a conversão de documentos, tornando mais simples o processo de criação de arquivos PDF a partir de documentos editáveis.
+# Sistema de Cadastro e Geração de PDF
 
-Funcionalidades
-Conversão de DOCX para PDF: O projeto permite a conversão de documentos DOCX para o formato PDF com apenas algumas linhas de código.
-Personalização do PDF: É possível personalizar o PDF gerado conforme necessário, incluindo configurações de página, margens, fontes e muito mais.
-Facilidade de Uso: A API é projetada para ser intuitiva e simples de usar, permitindo que você integre facilmente a funcionalidade de conversão em seus próprios projetos.
-Requisitos
-Python 3.x
-Bibliotecas Python:
-python-docx para manipulação de documentos DOCX.
-pdfkit para a conversão de HTML para PDF.
-Você pode instalar as bibliotecas necessárias executando:
+Aplicação web profissional desenvolvida em Python (Flask) para cadastro de usuários e geração automática de relatórios em PDF. O sistema conta com validações robustas, interface moderna e responsiva.
 
-bash
-Copy code
-pip install python-docx pdfkit
-Uso
-Instale as DependênciasAntes de usar o projeto, instale as dependências necessárias com o comando:
-bash
-Copy code
-pip install python-docx pdfkit
-Convertendo DOCX para PDFPara converter um documento DOCX para PDF, utilize o seguinte código Python:
-python
-Copy code
-from docx_to_pdf import convert_to_pdf
+## Funcionalidades
 
-# Caminho do arquivo DOCX de entrada e PDF de saída
-docx_file = "caminho/do/seu/arquivo.docx"
-pdf_file = "caminho/do/seu/arquivo.pdf"
+### Frontend (Interface Web)
+*   **Design Profissional**: Interface limpa e responsiva utilizando **Bootstrap 5**.
+*   **Validação em Tempo Real**: Feedback imediato para o usuário enquanto preenche os campos.
+*   **Máscaras de Entrada**: Formatação automática para CPF, Telefone e CEP.
+*   **Acessibilidade**: Estrutura HTML semântica compatível com WCAG 2.1.
+*   **Persistência Local**: Funcionalidade "Salvar Rascunho" que armazena os dados no navegador para não perder o preenchimento.
 
-# Convertendo o documento DOCX para PDF
-convert_to_pdf(docx_file, pdf_file)
-Este código irá ler o arquivo DOCX especificado e gerar um arquivo PDF correspondente.
-Personalização (Opcional)Você pode personalizar o PDF gerado ajustando as opções de conversão. Consulte a documentação da biblioteca pdfkit para mais detalhes sobre as opções disponíveis.
-Exemplo
-Aqui está um exemplo completo de como converter um documento DOCX para PDF:
+### Backend (Python/Flask)
+*   **Validação de Dados**: Verificação de CPF (algoritmo oficial), idade mínima (18 anos) e consistência de emails.
+*   **Geração de PDF**: Motor de renderização utilizando **ReportLab** para criar documentos PDF elegantes e bem formatados.
+*   **Segurança**: Sanitização de entradas e tratamento de erros.
 
-python
-Copy code
-from docx_to_pdf import convert_to_pdf
+## Campos do Formulário
 
-# Caminho do arquivo DOCX de entrada e PDF de saída
-docx_file = "caminho/do/seu/arquivo.docx"
-pdf_file = "caminho/do/seu/arquivo.pdf"
+*   **Dados Pessoais**: Nome Completo, CPF, RG, Data de Nascimento, Gênero, Estado Civil, Nome da Mãe, Profissão.
+*   **Contato**: Email (com confirmação), Telefone Celular.
+*   **Endereço**: CEP, Logradouro, Número, Complemento, Bairro, Cidade, Estado.
+*   **Outros**: Campo de observação com contador de caracteres.
 
-# Convertendo o documento DOCX para PDF
-convert_to_pdf(docx_file, pdf_file)
-Contribuição
-Contribuições são bem-vindas! Se você encontrar um problema ou deseja melhorar este projeto, fique à vontade para abrir uma issue ou enviar um pull request.
+## Como Executar
 
-Licença
-Este projeto é licenciado sob a MIT License.
+1.  **Instale as dependências**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Inicie o servidor**:
+    ```bash
+    python app.py
+    ```
+
+3.  **Acesse a aplicação**:
+    Abra o navegador em `http://127.0.0.1:5000`
+
+## Estrutura de Arquivos
+
+*   `app.py`: Controlador principal (Backend).
+*   `pdf_generator.py`: Lógica de criação do PDF.
+*   `templates/index.html`: Interface do usuário.
+*   `static/js/script.js`: Lógica de validação e máscaras no cliente.
+*   `static/css/`: Estilos personalizados (opcional).
