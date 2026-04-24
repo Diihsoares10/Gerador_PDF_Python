@@ -1,23 +1,29 @@
 /* ============================================================
-   Modern Form — Validation, UX helpers, theme, draft autosave
+   Modern Form — Validation, server-side autosave, theme, share
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('cadastroForm');
+    const body = document.body;
+    const initialResumeUrl = body.dataset.resumeUrl || '';
 
     /* ---------- Theme toggle ---------- */
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
     function applyTheme(t) {
         document.documentElement.setAttribute('data-theme', t);
-        themeIcon.className = t === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        if (themeIcon) themeIcon.className = t === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
         try { localStorage.setItem('theme', t); } catch (e) {}
     }
     applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
-    themeToggle.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        applyTheme(current === 'dark' ? 'light' : 'dark');
-    });
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            applyTheme(current === 'dark' ? 'light' : 'dark');
+        });
+    }
+
+    if (!form) return; // Pages that don't have the form (admin) stop here.
 
     /* ---------- Input masks ---------- */
     const phoneMask = IMask(document.getElementById('telefone'), { mask: '(00) 00000-0000' });
@@ -26,19 +32,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* ---------- Helpers: field state ---------- */
     function fieldOf(input) { return input.closest('.field'); }
-
     function setHelp(input, msg) {
-        const f = fieldOf(input);
-        if (!f) return;
-        const help = f.querySelector('.field-help');
-        if (!help) return;
-        if (msg) {
-            help.textContent = msg;
-        } else {
-            help.textContent = help.dataset.default || '';
-        }
+        const f = fieldOf(input); if (!f) return;
+        const help = f.querySelector('.field-help'); if (!help) return;
+        help.textContent = msg || help.dataset.default || '';
     }
-
     function setValid(input) {
         const f = fieldOf(input); if (!f) return;
         f.classList.add('is-valid');
@@ -52,12 +50,6 @@ document.addEventListener('DOMContentLoaded', function () {
         f.classList.remove('is-valid');
         input.setCustomValidity(msg || 'Inválido');
         setHelp(input, msg);
-    }
-    function clearState(input) {
-        const f = fieldOf(input); if (!f) return;
-        f.classList.remove('is-valid', 'is-invalid');
-        input.setCustomValidity('');
-        setHelp(input, null);
     }
 
     /* ---------- Validators ---------- */
@@ -73,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function () {
         rev = 11 - (add % 11); if (rev >= 10) rev = 0;
         return rev === parseInt(cpf.charAt(10));
     }
-
     function isMaiorDeIdade(dateString) {
         if (!dateString) return false;
         const today = new Date();
@@ -84,12 +75,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
         return age >= 18 && age <= 120;
     }
-
     function isValidEmail(v) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((v || '').trim());
     }
 
-    /* ---------- Per-field live validation ---------- */
     const validators = {
         nome: (el) => {
             const v = el.value.trim();
@@ -139,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function runValidator(name) {
         const el = document.getElementById(name);
-        if (!el) return true;
+        if (!el || !validators[name]) return true;
         const v = validators[name](el);
         if (v.ok) setValid(el); else setInvalid(el, v.msg);
         return v.ok;
@@ -148,11 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
     Object.keys(validators).forEach(name => {
         const el = document.getElementById(name);
         if (!el) return;
-        // Validate on blur (first interaction)
-        el.addEventListener('blur', () => {
-            if (el.value || el.required) runValidator(name);
-        });
-        // Live re-validate while typing — but only after a first invalid attempt
+        el.addEventListener('blur', () => { if (el.value || el.required) runValidator(name); });
         el.addEventListener('input', () => {
             const f = fieldOf(el);
             if (f && (f.classList.contains('is-valid') || f.classList.contains('is-invalid'))) {
@@ -168,13 +153,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Re-validate confirmation if main email changes
     document.getElementById('email').addEventListener('input', () => {
         const conf = document.getElementById('email_confirmacao');
         if (conf.value) runValidator('email_confirmacao');
     });
 
-    /* ---------- Character counter (textarea) ---------- */
+    // Optional fields also trigger autosave
+    ['estado_civil','nome_mae','profissao','telefone','cep','logradouro',
+     'numero','complemento','bairro','cidade','estado'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', scheduleAutosave);
+        el.addEventListener('change', scheduleAutosave);
+    });
+
+    /* ---------- Character counter ---------- */
     const obs = document.getElementById('observacao');
     const charCount = document.getElementById('charCount');
     const charCounter = document.getElementById('charCounter');
@@ -189,7 +182,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const progressFill = document.getElementById('progressFill');
     const progressPct = document.getElementById('progressPct');
     const progressBar = document.getElementById('progressBar');
-
     const requiredIds = ['nome','cpf','rg','data_nascimento','genero','email','email_confirmacao','observacao'];
     function updateProgress() {
         let filled = 0;
@@ -212,10 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
             setHelp(cepInput, 'Buscando endereço...');
             const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
             const data = await res.json();
-            if (data.erro) {
-                setInvalid(cepInput, 'CEP não encontrado.');
-                return;
-            }
+            if (data.erro) { setInvalid(cepInput, 'CEP não encontrado.'); return; }
             const fill = (id, v) => {
                 const el = document.getElementById(id);
                 if (el && !el.value) { el.value = v || ''; el.dispatchEvent(new Event('input')); }
@@ -226,13 +215,62 @@ document.addEventListener('DOMContentLoaded', function () {
             fill('estado', (data.uf || '').toUpperCase());
             setValid(cepInput);
             setHelp(cepInput, 'Endereço preenchido automaticamente.');
-            // Move focus to "número" for speed
             const numero = document.getElementById('numero');
             if (numero && !numero.value) numero.focus();
+            scheduleAutosave();
         } catch (err) {
             setHelp(cepInput, 'Não foi possível buscar o CEP agora.');
         }
     });
+
+    /* ---------- Server-side autosave ---------- */
+    const draftStatus = document.getElementById('draftStatus');
+    const draftText = draftStatus.querySelector('.draft-text');
+    let saveTimer = null;
+    let inflight = null;
+
+    function collectFormData() {
+        const fd = new FormData(form);
+        const obj = {};
+        fd.forEach((v, k) => { obj[k] = v; });
+        return obj;
+    }
+
+    function setDraftState(state, text) {
+        draftStatus.classList.remove('saved', 'saving');
+        if (state) draftStatus.classList.add(state);
+        draftText.textContent = text;
+    }
+
+    async function saveDraft() {
+        if (inflight) return;
+        setDraftState('saving', 'Salvando...');
+        try {
+            inflight = fetch('/api/draft', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: collectFormData() }),
+                credentials: 'same-origin',
+            });
+            const res = await inflight;
+            const json = await res.json();
+            if (!res.ok || !json.ok) throw new Error('save failed');
+            const t = new Date(json.saved_at);
+            const hh = String(t.getHours()).padStart(2, '0');
+            const mm = String(t.getMinutes()).padStart(2, '0');
+            setDraftState('saved', `Salvo às ${hh}:${mm}`);
+        } catch (e) {
+            setDraftState(null, 'Não foi possível salvar agora.');
+        } finally {
+            inflight = null;
+        }
+    }
+
+    function scheduleAutosave() {
+        setDraftState('saving', 'Salvando...');
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveDraft, 1000);
+    }
 
     /* ---------- Submit ---------- */
     const btnEnviar = document.getElementById('btnEnviar');
@@ -252,106 +290,63 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             return;
         }
-        // UX feedback
         btnEnviar.classList.add('loading');
         btnEnviar.disabled = true;
-        // Re-enable after 8s in case of slow PDF or browser back
         setTimeout(() => {
             btnEnviar.classList.remove('loading');
             btnEnviar.disabled = false;
         }, 8000);
     });
 
-    /* ---------- Draft autosave (localStorage) ---------- */
-    const draftStatus = document.getElementById('draftStatus');
-    const draftText = draftStatus.querySelector('.draft-text');
-    const btnSalvar = document.getElementById('btnSalvarRascunho');
-    let saveTimer = null;
-
-    function collectFormData() {
-        const fd = new FormData(form);
-        const obj = {};
-        fd.forEach((v, k) => { obj[k] = v; });
-        return obj;
-    }
-
-    function setDraftState(state, text) {
-        draftStatus.classList.remove('saved', 'saving');
-        if (state) draftStatus.classList.add(state);
-        draftText.textContent = text;
-    }
-
-    function saveDraft(silent) {
-        try {
-            localStorage.setItem('formRascunho', JSON.stringify(collectFormData()));
-            localStorage.setItem('formRascunhoTs', String(Date.now()));
-            if (!silent) setDraftState('saved', 'Rascunho salvo agora');
-            else setDraftState('saved', 'Salvo automaticamente');
-        } catch (e) {
-            setDraftState(null, 'Não foi possível salvar o rascunho.');
-        }
-    }
-
-    function scheduleAutosave() {
-        setDraftState('saving', 'Salvando...');
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(() => saveDraft(true), 800);
-    }
-
-    btnSalvar.addEventListener('click', () => saveDraft(false));
-
-    // Load draft on page open
-    try {
-        const raw = localStorage.getItem('formRascunho');
-        if (raw) {
-            const data = JSON.parse(raw);
-            Object.keys(data).forEach(key => {
-                const input = form.elements[key];
-                if (input) {
-                    input.value = data[key];
-                    if (key === 'cpf') cpfMask.value = data[key];
-                    if (key === 'telefone') phoneMask.value = data[key];
-                    if (key === 'cep') cepMask.value = data[key];
-                }
-            });
-            charCount.textContent = (data.observacao || '').length;
-            const ts = parseInt(localStorage.getItem('formRascunhoTs') || '0', 10);
-            if (ts) {
-                const mins = Math.round((Date.now() - ts) / 60000);
-                setDraftState('saved', mins < 1 ? 'Rascunho restaurado' : `Rascunho restaurado (há ${mins} min)`);
-            } else {
-                setDraftState('saved', 'Rascunho restaurado');
-            }
-        } else {
-            setDraftState(null, 'Rascunho automático ativo');
-        }
-    } catch (e) {
-        console.error('Erro ao carregar rascunho', e);
-    }
-
-    updateProgress();
-
     /* ---------- Limpar ---------- */
-    document.getElementById('btnLimpar').addEventListener('click', function () {
-        if (!confirm('Tem certeza que deseja limpar todo o formulário?')) return;
-        form.reset();
-        cpfMask.value = '';
-        phoneMask.value = '';
-        cepMask.value = '';
-        charCount.textContent = '0';
-        charCounter.classList.remove('warn', 'danger');
-        document.querySelectorAll('.field').forEach(f => f.classList.remove('is-valid', 'is-invalid'));
-        document.querySelectorAll('.field-help').forEach(h => h.textContent = h.dataset.default || '');
-        try { localStorage.removeItem('formRascunho'); localStorage.removeItem('formRascunhoTs'); } catch (e) {}
-        setDraftState(null, 'Rascunho limpo');
-        updateProgress();
+    document.getElementById('btnLimpar').addEventListener('click', async function () {
+        if (!confirm('Tem certeza que deseja limpar todo o formulário? Isso também apaga o rascunho salvo.')) return;
+        try {
+            await fetch('/api/draft/clear', { method: 'POST', credentials: 'same-origin' });
+        } catch (e) {}
+        window.location.reload();
     });
 
-    /* ---------- Keyboard shortcut: Ctrl/Cmd + Enter to submit ---------- */
+    /* ---------- Share / resume link modal ---------- */
+    const shareModal = document.getElementById('shareModal');
+    const btnShare = document.getElementById('btnShare');
+    const btnCopy = document.getElementById('btnCopy');
+    const shareUrl = document.getElementById('shareUrl');
+
+    function openModal() { shareModal.classList.add('open'); shareModal.setAttribute('aria-hidden', 'false'); }
+    function closeModal() { shareModal.classList.remove('open'); shareModal.setAttribute('aria-hidden', 'true'); }
+
+    if (btnShare) btnShare.addEventListener('click', openModal);
+    shareModal.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    if (btnCopy) {
+        btnCopy.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(shareUrl.value);
+            } catch (e) {
+                shareUrl.select(); document.execCommand('copy');
+            }
+            const span = btnCopy.querySelector('span');
+            const orig = span.textContent;
+            span.textContent = 'Copiado!';
+            btnCopy.querySelector('i').className = 'fa-solid fa-check';
+            setTimeout(() => {
+                span.textContent = orig;
+                btnCopy.querySelector('i').className = 'fa-solid fa-copy';
+            }, 2000);
+        });
+    }
+
+    /* ---------- Keyboard shortcut ---------- */
     form.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             btnEnviar.click();
         }
     });
+
+    /* ---------- Init ---------- */
+    updateProgress();
+    setDraftState(null, 'Rascunho automático ativo');
 });

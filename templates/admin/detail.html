@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro #{{ s.id }} · Painel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body class="admin-body">
+    <main class="app-shell">
+        <header class="top-bar">
+            <div class="brand">
+                <a href="{{ url_for('admin_dashboard') }}" class="back-link"><i class="fa-solid fa-arrow-left"></i></a>
+                <div>
+                    <span class="brand-name">Cadastro #{{ s.id }}</span>
+                    <span class="brand-sub">{{ s.nome or 'Sem nome' }}</span>
+                </div>
+            </div>
+            <div class="top-actions">
+                {% if s.status == 'completed' %}
+                <a href="{{ url_for('admin_submission_pdf', sid=s.id) }}" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> Baixar PDF</a>
+                {% endif %}
+            </div>
+        </header>
+
+        <section class="glass-card">
+            <div class="card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <h1 style="margin:0; font-size:20px;">Detalhes do cadastro</h1>
+                    <p style="margin:4px 0 0; color:var(--text-secondary); font-size:13px;">
+                        Criado em {{ s.created_at.strftime('%d/%m/%Y %H:%M') if s.created_at else '' }} ·
+                        Atualizado em {{ s.updated_at.strftime('%d/%m/%Y %H:%M') if s.updated_at else '' }}
+                    </p>
+                </div>
+                <div>
+                    {% if s.status == 'completed' %}
+                      <span class="badge badge-success"><i class="fa-solid fa-check"></i> Concluído</span>
+                    {% else %}
+                      <span class="badge badge-warn"><i class="fa-solid fa-pen"></i> Rascunho · {{ s.progress }}%</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% set d = s.data or {} %}
+                {% set sections = [
+                    ('Dados Pessoais', 'fa-user', [
+                        ('Nome', d.get('nome')),
+                        ('CPF', d.get('cpf')),
+                        ('RG', d.get('rg')),
+                        ('Data de Nascimento', d.get('data_nascimento')),
+                        ('Gênero', d.get('genero')),
+                        ('Estado Civil', d.get('estado_civil')),
+                        ('Nome da Mãe', d.get('nome_mae')),
+                        ('Profissão', d.get('profissao')),
+                    ]),
+                    ('Contato', 'fa-envelope', [
+                        ('Email', d.get('email')),
+                        ('Telefone', d.get('telefone')),
+                    ]),
+                    ('Endereço', 'fa-location-dot', [
+                        ('CEP', d.get('cep')),
+                        ('Logradouro', d.get('logradouro')),
+                        ('Número', d.get('numero')),
+                        ('Complemento', d.get('complemento')),
+                        ('Bairro', d.get('bairro')),
+                        ('Cidade', d.get('cidade')),
+                        ('UF', d.get('estado')),
+                    ]),
+                    ('Observações', 'fa-comment-dots', [
+                        ('Observação', d.get('observacao')),
+                    ]),
+                ] %}
+
+                {% for title, icon, rows in sections %}
+                <div class="section">
+                    <div class="section-head">
+                        <div class="section-icon"><i class="fa-solid {{ icon }}"></i></div>
+                        <legend class="section-title">{{ title }}</legend>
+                    </div>
+                    <dl class="kv-grid">
+                        {% for label, value in rows %}
+                        <div class="kv-row">
+                            <dt>{{ label }}</dt>
+                            <dd>{{ value or '—' }}</dd>
+                        </div>
+                        {% endfor %}
+                    </dl>
+                </div>
+                {% endfor %}
+
+                <p class="footer-note" style="text-align:left;">
+                    <i class="fa-solid fa-link"></i>
+                    Token de retomada: <code>{{ s.resume_token }}</code>
+                </p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

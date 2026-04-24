@@ -7,17 +7,12 @@
     <meta name="theme-color" content="#6366f1">
     <title>Cadastro Digital — Formulário Moderno</title>
 
-    <!-- Inter typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome (icons) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-
     <link rel="stylesheet" href="/static/css/style.css">
 
-    <!-- Inline pre-paint to avoid theme flash -->
     <script>
         (function () {
             try {
@@ -28,8 +23,8 @@
         })();
     </script>
 </head>
-<body>
-    <!-- Flash messages (toast style) -->
+<body data-resume-url="{{ resume_url }}" data-progress="{{ progress }}">
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="flash-stack" role="status" aria-live="polite">
@@ -47,7 +42,6 @@
     {% endwith %}
 
     <main class="app-shell">
-        <!-- Top bar: brand + theme toggle -->
         <header class="top-bar">
             <div class="brand">
                 <div class="brand-logo" aria-hidden="true"><i class="fa-solid fa-feather-pointed"></i></div>
@@ -56,33 +50,38 @@
                     <span class="brand-sub">Preenchimento rápido e seguro</span>
                 </div>
             </div>
-            <button type="button" class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
-                <i class="fa-solid fa-moon" id="themeIcon"></i>
-            </button>
+            <div class="top-actions">
+                <button type="button" class="icon-btn" id="btnShare" title="Copiar link para retomar este formulário" aria-label="Copiar link de retomada">
+                    <i class="fa-solid fa-link"></i>
+                </button>
+                <a href="{{ url_for('admin_dashboard') }}" class="icon-btn" title="Painel administrativo" aria-label="Painel administrativo">
+                    <i class="fa-solid fa-chart-line"></i>
+                </a>
+                <button type="button" class="icon-btn theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
         </header>
 
-        <!-- Main card -->
         <section class="glass-card" aria-labelledby="formTitle">
             <div class="card-head">
                 <h1 id="formTitle">Vamos te conhecer melhor</h1>
-                <p>Preencha os campos abaixo. Levamos cerca de 2 minutos e geramos seu PDF automaticamente.</p>
+                <p>Preencha os campos abaixo. Salvamos automaticamente — você pode fechar e voltar quando quiser.</p>
             </div>
 
-            <!-- Progress -->
             <div class="progress-wrap">
                 <div class="progress-meta">
                     <span><i class="fa-solid fa-list-check"></i> Progresso do formulário</span>
-                    <span><strong id="progressPct">0%</strong> concluído</span>
+                    <span><strong id="progressPct">{{ progress }}%</strong> concluído</span>
                 </div>
-                <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
-                    <div class="progress-fill" id="progressFill"></div>
+                <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ progress }}" id="progressBar">
+                    <div class="progress-fill" id="progressFill" style="width: {{ progress }}%"></div>
                 </div>
             </div>
 
             <div class="card-body">
                 <form id="cadastroForm" action="/" method="POST" novalidate>
 
-                    <!-- ============== Dados Pessoais ============== -->
                     <fieldset class="section">
                         <div class="section-head">
                             <div class="section-icon"><i class="fa-solid fa-user"></i></div>
@@ -97,7 +96,7 @@
                                 <label for="nome" class="field-label">Nome Completo <span class="req" aria-hidden="true">*</span></label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-id-card input-icon"></i>
-                                    <input type="text" class="input" id="nome" name="nome" placeholder="Ex: Maria da Silva" minlength="3" required autocomplete="name">
+                                    <input type="text" class="input" id="nome" name="nome" placeholder="Ex: Maria da Silva" minlength="3" required autocomplete="name" value="{{ prefill.nome|default('') }}">
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
                                 <div class="field-help" data-default="Como aparece em seus documentos.">Como aparece em seus documentos.</div>
@@ -107,7 +106,7 @@
                                 <label for="cpf" class="field-label">CPF <span class="req" aria-hidden="true">*</span></label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-fingerprint input-icon"></i>
-                                    <input type="text" class="input" id="cpf" name="cpf" placeholder="000.000.000-00" required inputmode="numeric" autocomplete="off">
+                                    <input type="text" class="input" id="cpf" name="cpf" placeholder="000.000.000-00" required inputmode="numeric" autocomplete="off" value="{{ prefill.cpf|default('') }}">
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
                                 <div class="field-help" data-default="Apenas números — formataremos para você.">Apenas números — formataremos para você.</div>
@@ -117,7 +116,7 @@
                                 <label for="rg" class="field-label">RG <span class="req" aria-hidden="true">*</span></label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-address-card input-icon"></i>
-                                    <input type="text" class="input" id="rg" name="rg" placeholder="00.000.000-0" required>
+                                    <input type="text" class="input" id="rg" name="rg" placeholder="00.000.000-0" required value="{{ prefill.rg|default('') }}">
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
                                 <div class="field-help" data-default="Conforme emitido pelo seu estado.">Conforme emitido pelo seu estado.</div>
@@ -127,7 +126,7 @@
                                 <label for="data_nascimento" class="field-label">Data de Nascimento <span class="req" aria-hidden="true">*</span></label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-cake-candles input-icon"></i>
-                                    <input type="date" class="input" id="data_nascimento" name="data_nascimento" required autocomplete="bday">
+                                    <input type="date" class="input" id="data_nascimento" name="data_nascimento" required autocomplete="bday" value="{{ prefill.data_nascimento|default('') }}">
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
                                 <div class="field-help" data-default="Você precisa ter 18 anos ou mais.">Você precisa ter 18 anos ou mais.</div>
@@ -138,11 +137,10 @@
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-venus-mars input-icon"></i>
                                     <select class="input select" id="genero" name="genero" required>
-                                        <option value="" selected disabled>Selecione...</option>
-                                        <option value="Masculino">Masculino</option>
-                                        <option value="Feminino">Feminino</option>
-                                        <option value="Outro">Outro</option>
-                                        <option value="Prefiro não dizer">Prefiro não dizer</option>
+                                        <option value="" disabled {% if not prefill.genero %}selected{% endif %}>Selecione...</option>
+                                        {% for opt in ['Masculino', 'Feminino', 'Outro', 'Prefiro não dizer'] %}
+                                          <option value="{{ opt }}" {% if prefill.genero == opt %}selected{% endif %}>{{ opt }}</option>
+                                        {% endfor %}
                                     </select>
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
@@ -154,11 +152,10 @@
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-heart input-icon"></i>
                                     <select class="input select" id="estado_civil" name="estado_civil">
-                                        <option value="" selected disabled>Selecione...</option>
-                                        <option value="Solteiro">Solteiro(a)</option>
-                                        <option value="Casado">Casado(a)</option>
-                                        <option value="Divorciado">Divorciado(a)</option>
-                                        <option value="Viúvo">Viúvo(a)</option>
+                                        <option value="" disabled {% if not prefill.estado_civil %}selected{% endif %}>Selecione...</option>
+                                        {% for opt in ['Solteiro', 'Casado', 'Divorciado', 'Viúvo'] %}
+                                          <option value="{{ opt }}" {% if prefill.estado_civil == opt %}selected{% endif %}>{{ opt }}(a)</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                                 <div class="field-help" data-default="Opcional.">Opcional.</div>
@@ -168,7 +165,7 @@
                                 <label for="nome_mae" class="field-label">Nome da Mãe</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-person-dress input-icon"></i>
-                                    <input type="text" class="input" id="nome_mae" name="nome_mae" placeholder="Nome completo da mãe">
+                                    <input type="text" class="input" id="nome_mae" name="nome_mae" placeholder="Nome completo da mãe" value="{{ prefill.nome_mae|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="Opcional.">Opcional.</div>
                             </div>
@@ -177,14 +174,13 @@
                                 <label for="profissao" class="field-label">Profissão</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-briefcase input-icon"></i>
-                                    <input type="text" class="input" id="profissao" name="profissao" placeholder="Ex: Designer, Engenheira...">
+                                    <input type="text" class="input" id="profissao" name="profissao" placeholder="Ex: Designer, Engenheira..." value="{{ prefill.profissao|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="Opcional.">Opcional.</div>
                             </div>
                         </div>
                     </fieldset>
 
-                    <!-- ============== Contato ============== -->
                     <fieldset class="section">
                         <div class="section-head">
                             <div class="section-icon"><i class="fa-solid fa-envelope"></i></div>
@@ -199,7 +195,7 @@
                                 <label for="email" class="field-label">Email <span class="req" aria-hidden="true">*</span></label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-at input-icon"></i>
-                                    <input type="email" class="input" id="email" name="email" placeholder="voce@exemplo.com" required autocomplete="email">
+                                    <input type="email" class="input" id="email" name="email" placeholder="voce@exemplo.com" required autocomplete="email" value="{{ prefill.email|default('') }}">
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
                                 <div class="field-help" data-default="Usaremos para enviar o PDF gerado.">Usaremos para enviar o PDF gerado.</div>
@@ -209,7 +205,7 @@
                                 <label for="email_confirmacao" class="field-label">Confirmar Email <span class="req" aria-hidden="true">*</span></label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-shield-halved input-icon"></i>
-                                    <input type="email" class="input" id="email_confirmacao" name="email_confirmacao" placeholder="Repita o email acima" required autocomplete="email">
+                                    <input type="email" class="input" id="email_confirmacao" name="email_confirmacao" placeholder="Repita o email acima" required autocomplete="email" value="{{ prefill.email_confirmacao|default('') }}">
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
                                 <div class="field-help" data-default="Os dois emails precisam ser iguais.">Os dois emails precisam ser iguais.</div>
@@ -219,14 +215,13 @@
                                 <label for="telefone" class="field-label">Telefone Celular</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-mobile-screen-button input-icon"></i>
-                                    <input type="tel" class="input" id="telefone" name="telefone" placeholder="(00) 00000-0000" autocomplete="tel">
+                                    <input type="tel" class="input" id="telefone" name="telefone" placeholder="(00) 00000-0000" autocomplete="tel" value="{{ prefill.telefone|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="Com DDD. Opcional.">Com DDD. Opcional.</div>
                             </div>
                         </div>
                     </fieldset>
 
-                    <!-- ============== Endereço ============== -->
                     <fieldset class="section">
                         <div class="section-head">
                             <div class="section-icon"><i class="fa-solid fa-location-dot"></i></div>
@@ -241,7 +236,7 @@
                                 <label for="cep" class="field-label">CEP</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-map-pin input-icon"></i>
-                                    <input type="text" class="input" id="cep" name="cep" placeholder="00000-000" autocomplete="postal-code" inputmode="numeric">
+                                    <input type="text" class="input" id="cep" name="cep" placeholder="00000-000" autocomplete="postal-code" inputmode="numeric" value="{{ prefill.cep|default('') }}">
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
                                 <div class="field-help" data-default="Buscamos o endereço para você.">Buscamos o endereço para você.</div>
@@ -250,7 +245,7 @@
                                 <label for="logradouro" class="field-label">Logradouro</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-road input-icon"></i>
-                                    <input type="text" class="input" id="logradouro" name="logradouro" placeholder="Rua, Avenida..." autocomplete="address-line1">
+                                    <input type="text" class="input" id="logradouro" name="logradouro" placeholder="Rua, Avenida..." autocomplete="address-line1" value="{{ prefill.logradouro|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
@@ -258,7 +253,7 @@
                                 <label for="numero" class="field-label">Número</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-hashtag input-icon"></i>
-                                    <input type="text" class="input" id="numero" name="numero" placeholder="123">
+                                    <input type="text" class="input" id="numero" name="numero" placeholder="123" value="{{ prefill.numero|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
@@ -266,7 +261,7 @@
                                 <label for="complemento" class="field-label">Complemento</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-building input-icon"></i>
-                                    <input type="text" class="input" id="complemento" name="complemento" placeholder="Apto, sala, bloco">
+                                    <input type="text" class="input" id="complemento" name="complemento" placeholder="Apto, sala, bloco" value="{{ prefill.complemento|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="Opcional.">Opcional.</div>
                             </div>
@@ -274,7 +269,7 @@
                                 <label for="bairro" class="field-label">Bairro</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-tree-city input-icon"></i>
-                                    <input type="text" class="input" id="bairro" name="bairro" placeholder="Seu bairro" autocomplete="address-level3">
+                                    <input type="text" class="input" id="bairro" name="bairro" placeholder="Seu bairro" autocomplete="address-level3" value="{{ prefill.bairro|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
@@ -282,7 +277,7 @@
                                 <label for="cidade" class="field-label">Cidade</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-city input-icon"></i>
-                                    <input type="text" class="input" id="cidade" name="cidade" placeholder="Sua cidade" autocomplete="address-level2">
+                                    <input type="text" class="input" id="cidade" name="cidade" placeholder="Sua cidade" autocomplete="address-level2" value="{{ prefill.cidade|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
@@ -290,14 +285,13 @@
                                 <label for="estado" class="field-label">UF</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-flag input-icon"></i>
-                                    <input type="text" class="input" id="estado" name="estado" maxlength="2" placeholder="SP" autocomplete="address-level1" style="text-transform:uppercase">
+                                    <input type="text" class="input" id="estado" name="estado" maxlength="2" placeholder="SP" autocomplete="address-level1" style="text-transform:uppercase" value="{{ prefill.estado|default('') }}">
                                 </div>
                                 <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
                         </div>
                     </fieldset>
 
-                    <!-- ============== Observações ============== -->
                     <fieldset class="section">
                         <div class="section-head">
                             <div class="section-icon"><i class="fa-solid fa-comment-dots"></i></div>
@@ -310,14 +304,13 @@
                         <div class="grid">
                             <div class="field col-12">
                                 <label for="observacao" class="field-label">Observação <span class="req" aria-hidden="true">*</span></label>
-                                <textarea class="input textarea no-icon" id="observacao" name="observacao" rows="4" maxlength="500" required placeholder="Escreva aqui informações adicionais (até 500 caracteres)..."></textarea>
-                                <div class="char-counter" id="charCounter"><span id="charCount">0</span>/500</div>
+                                <textarea class="input textarea no-icon" id="observacao" name="observacao" rows="4" maxlength="500" required placeholder="Escreva aqui informações adicionais (até 500 caracteres)...">{{ prefill.observacao|default('') }}</textarea>
+                                <div class="char-counter" id="charCounter"><span id="charCount">{{ (prefill.observacao|default(''))|length }}</span>/500</div>
                                 <div class="field-help" data-default="Esse texto aparecerá no PDF final.">Esse texto aparecerá no PDF final.</div>
                             </div>
                         </div>
                     </fieldset>
 
-                    <!-- Actions -->
                     <div class="actions">
                         <span class="draft-status" id="draftStatus" aria-live="polite">
                             <span class="dot"></span>
@@ -325,9 +318,6 @@
                         </span>
                         <button type="button" class="btn btn-ghost" id="btnLimpar" title="Limpa todos os campos">
                             <i class="fa-solid fa-eraser"></i> Limpar
-                        </button>
-                        <button type="button" class="btn btn-secondary" id="btnSalvarRascunho" title="Salva o rascunho manualmente">
-                            <i class="fa-solid fa-floppy-disk"></i> Salvar Rascunho
                         </button>
                         <button type="submit" class="btn btn-primary" id="btnEnviar">
                             <span class="spinner" aria-hidden="true"></span>
@@ -343,6 +333,22 @@
             Seus dados são processados com segurança e nunca compartilhados.
         </p>
     </main>
+
+    <!-- Resume link modal -->
+    <div class="modal" id="shareModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close></div>
+        <div class="modal-card" role="dialog" aria-labelledby="shareTitle" aria-modal="true">
+            <button class="modal-close" data-close aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-icon"><i class="fa-solid fa-link"></i></div>
+            <h2 id="shareTitle">Continue de onde parou</h2>
+            <p class="modal-sub">Salve este link. Você pode usá-lo em qualquer dispositivo para retomar este formulário sem perder o que já preencheu.</p>
+            <div class="copy-row">
+                <input type="text" id="shareUrl" class="input no-icon" readonly value="{{ resume_url }}">
+                <button type="button" class="btn btn-primary" id="btnCopy"><i class="fa-solid fa-copy"></i> <span>Copiar</span></button>
+            </div>
+            <p class="modal-foot"><i class="fa-solid fa-circle-info"></i> Qualquer pessoa com esse link consegue editar o formulário — guarde-o com cuidado.</p>
+        </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/imask/6.4.3/imask.min.js"></script>
     <script src="/static/js/script.js"></script>
