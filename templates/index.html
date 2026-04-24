@@ -105,11 +105,44 @@
                 <button type="button" class="btn btn-primary btn-xl" id="btnStart">
                     <span class="btn-label"><i class="fa-solid fa-arrow-right-long"></i> Começar agora</span>
                 </button>
+                <button type="button" class="btn-link" id="btnHaveCadastro">
+                    <i class="fa-solid fa-magnifying-glass"></i> Já tenho cadastro · continuar pelo CPF
+                </button>
                 <span class="landing-meta">
                     <i class="fa-solid fa-circle-info"></i>
                     Tenha em mãos: CPF, RG e CEP
                 </span>
             </div>
+        </section>
+
+        <!-- ========== CPF LOOKUP SCREEN ========== -->
+        <section class="landing glass-card lookup-card" id="lookupCard" hidden aria-labelledby="lookupTitle">
+            <button type="button" class="back-link" id="btnBackToLanding">
+                <i class="fa-solid fa-arrow-left"></i> Voltar
+            </button>
+            <div class="lookup-icon"><i class="fa-solid fa-id-card"></i></div>
+            <h1 id="lookupTitle" class="landing-title">Continuar cadastro</h1>
+            <p class="landing-sub">Digite seu CPF abaixo. Se já houver um cadastro iniciado, vamos te levar de volta de onde parou.</p>
+
+            <form id="lookupForm" class="lookup-form" novalidate>
+                <div class="field">
+                    <label for="lookupCpf" class="field-label sr-only">CPF</label>
+                    <div class="input-wrap input-wrap-lg">
+                        <i class="fa-solid fa-fingerprint input-icon"></i>
+                        <input type="text" class="input" id="lookupCpf" placeholder="000.000.000-00" inputmode="numeric" autocomplete="off" required>
+                    </div>
+                    <div class="field-help" id="lookupFeedback" data-default="Apenas números — formataremos para você.">Apenas números — formataremos para você.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-xl" id="btnLookup">
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span class="btn-label"><i class="fa-solid fa-magnifying-glass"></i> Buscar cadastro</span>
+                </button>
+
+                <button type="button" class="btn-link" id="btnNoCadastro">
+                    Não tenho cadastro — começar do zero
+                </button>
+            </form>
         </section>
 
         <!-- ========== FORM CARD ========== -->

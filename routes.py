@@ -158,6 +158,64 @@ def api_save_draft():
     )
 
 
+def _validar_cpf(cpf: str) -> bool:
+    """Validate a Brazilian CPF (digits-only or formatted)."""
+    cpf = re.sub(r"\D", "", cpf or "")
+    if len(cpf) != 11 or cpf == cpf[0] * 11:
+        return False
+    for i in (9, 10):
+        s = sum(int(cpf[j]) * ((i + 1) - j) for j in range(i))
+        d = (s * 10) % 11
+        if d == 10:
+            d = 0
+        if d != int(cpf[i]):
+            return False
+    return True
+
+
+@app.route("/api/lookup", methods=["POST"])
+def api_lookup_cpf():
+    """Look up an existing draft/submission by CPF.
+
+    Security: validates CPF format, applies a per-session rate limit,
+    and returns a generic message instead of leaking which CPFs exist.
+    """
+    payload = request.get_json(silent=True) or {}
+    raw_cpf = (payload.get("cpf") or "").strip()
+
+    # Per-session rate limit (max 8 attempts per minute)
+    now = datetime.utcnow().timestamp()
+    attempts = [t for t in session.get("lookup_attempts", []) if now - t < 60]
+    if len(attempts) >= 8:
+        return jsonify({"ok": False, "error": "Muitas tentativas. Tente novamente em 1 minuto."}), 429
+    attempts.append(now)
+    session["lookup_attempts"] = attempts
+
+    if not _validar_cpf(raw_cpf):
+        return jsonify({"ok": False, "error": "CPF inválido. Verifique os dígitos."}), 400
+
+    digits = re.sub(r"\D", "", raw_cpf)
+    formatted = f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+
+    submission = (
+        Submission.query
+        .filter(Submission.cpf.in_([digits, formatted, raw_cpf]))
+        .order_by(Submission.updated_at.desc())
+        .first()
+    )
+
+    if not submission:
+        return jsonify({"ok": False, "error": "Não encontramos cadastro com esse CPF."}), 404
+
+    return jsonify({
+        "ok": True,
+        "resume_url": url_for("resume", token=submission.resume_token, _external=True),
+        "progress": submission.progress,
+        "status": submission.status,
+        "nome": submission.nome,
+    })
+
+
 @app.route("/api/draft/clear", methods=["POST"])
 def api_clear_draft():
     token = session.pop("submission_token", None)

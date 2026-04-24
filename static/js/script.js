@@ -39,6 +39,85 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (btnStart) btnStart.addEventListener('click', showForm);
 
+    /* ---------- CPF lookup screen ---------- */
+    const lookupCard = document.getElementById('lookupCard');
+    const btnHaveCadastro = document.getElementById('btnHaveCadastro');
+    const btnBackToLanding = document.getElementById('btnBackToLanding');
+    const btnNoCadastro = document.getElementById('btnNoCadastro');
+    const lookupForm = document.getElementById('lookupForm');
+    const lookupCpfInput = document.getElementById('lookupCpf');
+    const lookupFeedback = document.getElementById('lookupFeedback');
+    const btnLookup = document.getElementById('btnLookup');
+
+    function showLookup() {
+        if (landing) landing.hidden = true;
+        if (lookupCard) {
+            lookupCard.hidden = false;
+            setTimeout(() => lookupCpfInput && lookupCpfInput.focus(), 120);
+        }
+    }
+    function showLanding() {
+        if (lookupCard) lookupCard.hidden = true;
+        if (landing) landing.hidden = false;
+    }
+    function setLookupFeedback(state, text) {
+        if (!lookupFeedback) return;
+        lookupFeedback.classList.remove('is-error', 'is-success', 'is-loading');
+        if (state) lookupFeedback.classList.add('is-' + state);
+        lookupFeedback.textContent = text || lookupFeedback.dataset.default || '';
+    }
+
+    if (btnHaveCadastro) btnHaveCadastro.addEventListener('click', showLookup);
+    if (btnBackToLanding) btnBackToLanding.addEventListener('click', showLanding);
+    if (btnNoCadastro) btnNoCadastro.addEventListener('click', () => {
+        if (lookupCard) lookupCard.hidden = true;
+        showForm();
+    });
+
+    if (lookupCpfInput) {
+        IMask(lookupCpfInput, { mask: '000.000.000-00' });
+    }
+
+    if (lookupForm) {
+        lookupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const cpf = (lookupCpfInput.value || '').trim();
+            if (cpf.replace(/\D/g, '').length !== 11) {
+                setLookupFeedback('error', 'Digite um CPF completo (11 dígitos).');
+                lookupCpfInput.focus();
+                return;
+            }
+            setLookupFeedback('loading', 'Buscando...');
+            btnLookup.classList.add('loading');
+            btnLookup.disabled = true;
+            try {
+                const res = await fetch('/api/lookup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cpf }),
+                    credentials: 'same-origin',
+                });
+                const json = await res.json();
+                if (res.ok && json.ok) {
+                    const greeting = json.nome ? `Encontrado! Olá, ${json.nome.split(' ')[0]} — abrindo seu cadastro...` : 'Encontrado! Abrindo seu cadastro...';
+                    setLookupFeedback('success', greeting);
+                    setTimeout(() => { window.location.href = json.resume_url; }, 800);
+                    return;
+                }
+                setLookupFeedback('error', json.error || 'Não encontramos cadastro com esse CPF.');
+            } catch (err) {
+                setLookupFeedback('error', 'Não foi possível buscar agora. Tente novamente.');
+            } finally {
+                btnLookup.classList.remove('loading');
+                btnLookup.disabled = false;
+            }
+        });
+
+        lookupCpfInput.addEventListener('input', () => {
+            if (lookupFeedback.classList.contains('is-error')) setLookupFeedback(null, null);
+        });
+    }
+
     if (!form) return;
 
     /* ---------- Input masks ---------- */
