@@ -26,6 +26,7 @@ from models import Submission, User
 from replit_auth import make_replit_blueprint, require_login
 from pdf_generator import gerar_pdf
 from replit_mail import send_submission_notification
+from gmail_sender import send_pdf_to_user
 
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
 
@@ -176,6 +177,7 @@ def submit_form():
         "cep", "logradouro", "numero", "complemento", "bairro", "cidade",
         "estado", "observacao",
     ]}
+    receber_por_email = request.form.get("receber_por_email") == "on"
 
     erros = []
     if not dados["nome"] or len(dados["nome"]) < 3:
@@ -214,13 +216,24 @@ def submit_form():
         pdf_bytes = pdf_buffer.getvalue()
         pdf_buffer.seek(0)
 
-        # Fire notification email asynchronously (don't block the user)
+        # Fire notifications asynchronously (don't block the user)
+        user_email = dados.get("email") or ""
+        user_name = dados.get("nome") or ""
+
         def _notify(sub_id):
+            # 1) Notify the workspace owner
             try:
                 send_submission_notification(submission, pdf_bytes)
-                logging.info("Notification email sent for submission %s", sub_id)
+                logging.info("Owner notification sent for submission %s", sub_id)
             except Exception as exc:
-                logging.warning("Failed to send notification for %s: %s", sub_id, exc)
+                logging.warning("Owner notification failed for %s: %s", sub_id, exc)
+
+            # 2) Send the PDF to the end-user (if they opted in)
+            if receber_por_email and user_email:
+                try:
+                    send_pdf_to_user(user_email, user_name, pdf_bytes)
+                except Exception as exc:
+                    logging.warning("User PDF email failed for %s: %s", sub_id, exc)
 
         threading.Thread(target=_notify, args=(submission.id,), daemon=True).start()
 

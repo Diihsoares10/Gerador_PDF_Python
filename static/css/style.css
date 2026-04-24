@@ -850,3 +850,76 @@ body::after {
     font-size: 14px;
     word-break: break-word;
 }
+
+/* ============================================================
+   Email opt-in (checkbox above submit actions)
+   ============================================================ */
+.email-opt-in {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    margin: 24px 0 16px;
+    background: var(--field-bg);
+    border: 1px dashed var(--field-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition);
+}
+.email-opt-in:hover {
+    background: var(--surface);
+    border-color: var(--accent);
+}
+.email-opt-in input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--field-border);
+    border-radius: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    transition: background var(--transition), border-color var(--transition);
+    background: var(--surface);
+}
+.email-opt-in input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.email-opt-in input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 6px; top: 2px;
+    width: 5px; height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.email-opt-in input[type="checkbox"]:focus-visible {
+    outline: 3px solid var(--field-focus-ring);
+    outline-offset: 2px;
+}
+.email-opt-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--accent-gradient);
+    color: white;
+    display: grid; place-items: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.email-opt-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.4;
+}
+.email-opt-text strong {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+.email-opt-text span {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+}
