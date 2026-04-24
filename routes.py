@@ -18,10 +18,14 @@ from flask import (
 from flask_login import current_user
 from sqlalchemy import func, or_
 
+import logging
+import threading
+
 from app import app, db
 from models import Submission, User
 from replit_auth import make_replit_blueprint, require_login
 from pdf_generator import gerar_pdf
+from replit_mail import send_submission_notification
 
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
 
@@ -207,6 +211,19 @@ def submit_form():
 
     try:
         pdf_buffer = gerar_pdf(dados)
+        pdf_bytes = pdf_buffer.getvalue()
+        pdf_buffer.seek(0)
+
+        # Fire notification email asynchronously (don't block the user)
+        def _notify(sub_id):
+            try:
+                send_submission_notification(submission, pdf_bytes)
+                logging.info("Notification email sent for submission %s", sub_id)
+            except Exception as exc:
+                logging.warning("Failed to send notification for %s: %s", sub_id, exc)
+
+        threading.Thread(target=_notify, args=(submission.id,), daemon=True).start()
+
         safe_filename = re.sub(r"[^a-zA-Z0-9]", "_", dados["nome"])
         return send_file(
             pdf_buffer,

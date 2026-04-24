@@ -34,3 +34,4 @@ Flask-based web application for user registration with automatic PDF report gene
 - 2026-04-24: Imported from GitHub. Bound Flask to `0.0.0.0:5000` and configured deployment.
 - 2026-04-24: UI redesign — glassmorphism, light/dark mode, in-field icons, real-time validation, progress bar, ViaCEP autofill, animated blobs, a11y.
 - 2026-04-24: Phase 1 — added PostgreSQL + SQLAlchemy, `Submission` model with JSONB, server-side draft autosave, resume-by-link, Replit Auth, admin panel with search/filter/CSV export.
+- 2026-04-24: Email notifications — added `replit_mail.py` helper and async notification on form submission. Sends a styled HTML summary plus the generated PDF as an attachment to the workspace owner's verified email.
