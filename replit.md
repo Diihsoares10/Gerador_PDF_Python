@@ -35,3 +35,8 @@ Flask-based web application for user registration with automatic PDF report gene
 - 2026-04-24: UI redesign — glassmorphism, light/dark mode, in-field icons, real-time validation, progress bar, ViaCEP autofill, animated blobs, a11y.
 - 2026-04-24: Phase 1 — added PostgreSQL + SQLAlchemy, `Submission` model with JSONB, server-side draft autosave, resume-by-link, Replit Auth, admin panel with search/filter/CSV export.
 - 2026-04-24: Email notifications — added `replit_mail.py` helper and async notification on form submission. Sends a styled HTML summary plus the generated PDF as an attachment to the workspace owner's verified email.
+
+## Recent UX overhaul (Apr 2026)
+- **Landing screen** added before the form (`#landing` in `templates/index.html`): eyebrow badge, gradient headline, 3 tip cards, big "Começar agora" CTA. Shown when there is no draft; hidden automatically when the user lands via a resume URL `/r/<token>`.
+- **Multi-step form (4 steps)**: Pessoais → Contato → Endereço → Revisão. Stepper at the top + percentage progress bar + per-step required-field validation in `static/js/script.js` (`stepRequired` map). Step 4 renders a read-only review (`#reviewGrid`) before submission. Autosave continues to fire on every input.
+- **Dark-mode select fix**: replaced the native `<select>` for `genero` and `estado_civil` with custom `.choice-card` radio buttons (file-based icons + label). They use the same theme tokens as the rest of the form, so they are fully legible in both themes. Native selects (if reintroduced) get a forced color/background fix in CSS so options stay readable on dark backgrounds.

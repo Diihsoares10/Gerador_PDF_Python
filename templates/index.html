@@ -9,7 +9,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
 
@@ -23,7 +23,8 @@
         })();
     </script>
 </head>
-<body data-resume-url="{{ resume_url }}" data-progress="{{ progress }}">
+{% set has_draft = (progress|int) > 0 %}
+<body data-resume-url="{{ resume_url }}" data-progress="{{ progress }}" data-has-draft="{{ 'true' if has_draft else 'false' }}">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -63,15 +64,72 @@
             </div>
         </header>
 
-        <section class="glass-card" aria-labelledby="formTitle">
+        <!-- ========== LANDING SCREEN ========== -->
+        <section class="landing glass-card" id="landing" {% if has_draft %}hidden{% endif %} aria-labelledby="landingTitle">
+            <div class="landing-eyebrow">
+                <span class="dot-pulse" aria-hidden="true"></span>
+                Cadastro 100% online · leva cerca de 3 minutos
+            </div>
+            <h1 id="landingTitle" class="landing-title">
+                Tudo pronto para <span class="grad-text">começar</span>?
+            </h1>
+            <p class="landing-sub">
+                Preencha um formulário curto e receba seu PDF automaticamente. Você pode pausar a qualquer momento — salvamos seu progresso sozinhos.
+            </p>
+
+            <ul class="landing-tips" role="list">
+                <li>
+                    <span class="tip-icon"><i class="fa-solid fa-bolt"></i></span>
+                    <div>
+                        <strong>Rápido</strong>
+                        <span>Apenas 4 etapas curtas, com validação em tempo real.</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="tip-icon"><i class="fa-solid fa-floppy-disk"></i></span>
+                    <div>
+                        <strong>Salvamos por você</strong>
+                        <span>Pode fechar a aba — quando voltar, está tudo lá.</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="tip-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                    <div>
+                        <strong>Seguro</strong>
+                        <span>Seus dados ficam protegidos e não são compartilhados.</span>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="landing-actions">
+                <button type="button" class="btn btn-primary btn-xl" id="btnStart">
+                    <span class="btn-label"><i class="fa-solid fa-arrow-right-long"></i> Começar agora</span>
+                </button>
+                <span class="landing-meta">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Tenha em mãos: CPF, RG e CEP
+                </span>
+            </div>
+        </section>
+
+        <!-- ========== FORM CARD ========== -->
+        <section class="glass-card form-card" id="formCard" {% if not has_draft %}hidden{% endif %} aria-labelledby="formTitle">
             <div class="card-head">
                 <h1 id="formTitle">Vamos te conhecer melhor</h1>
-                <p>Preencha os campos abaixo. Salvamos automaticamente — você pode fechar e voltar quando quiser.</p>
+                <p>Preencha as etapas abaixo. Salvamos automaticamente — você pode fechar e voltar quando quiser.</p>
             </div>
+
+            <!-- Stepper -->
+            <ol class="stepper" id="stepper" role="list">
+                <li class="step is-active" data-step="1"><span class="step-num">1</span><span class="step-label">Pessoais</span></li>
+                <li class="step" data-step="2"><span class="step-num">2</span><span class="step-label">Contato</span></li>
+                <li class="step" data-step="3"><span class="step-num">3</span><span class="step-label">Endereço</span></li>
+                <li class="step" data-step="4"><span class="step-num">4</span><span class="step-label">Revisão</span></li>
+            </ol>
 
             <div class="progress-wrap">
                 <div class="progress-meta">
-                    <span><i class="fa-solid fa-list-check"></i> Progresso do formulário</span>
+                    <span><i class="fa-solid fa-list-check"></i> Etapa <strong id="stepCurrent">1</strong> de <strong>4</strong></span>
                     <span><strong id="progressPct">{{ progress }}%</strong> concluído</span>
                 </div>
                 <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ progress }}" id="progressBar">
@@ -82,7 +140,8 @@
             <div class="card-body">
                 <form id="cadastroForm" action="/" method="POST" novalidate>
 
-                    <fieldset class="section">
+                    <!-- ===== STEP 1: Pessoais ===== -->
+                    <fieldset class="section step-panel is-active" data-panel="1">
                         <div class="section-head">
                             <div class="section-icon"><i class="fa-solid fa-user"></i></div>
                             <div>
@@ -132,31 +191,46 @@
                                 <div class="field-help" data-default="Você precisa ter 18 anos ou mais.">Você precisa ter 18 anos ou mais.</div>
                             </div>
 
-                            <div class="field col-4">
-                                <label for="genero" class="field-label">Gênero <span class="req" aria-hidden="true">*</span></label>
-                                <div class="input-wrap">
-                                    <i class="fa-solid fa-venus-mars input-icon"></i>
-                                    <select class="input select" id="genero" name="genero" required>
-                                        <option value="" disabled {% if not prefill.genero %}selected{% endif %}>Selecione...</option>
-                                        {% for opt in ['Masculino', 'Feminino', 'Outro', 'Prefiro não dizer'] %}
-                                          <option value="{{ opt }}" {% if prefill.genero == opt %}selected{% endif %}>{{ opt }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <i class="fa-solid fa-circle-check input-status"></i>
+                            <div class="field col-8">
+                                <span class="field-label">Gênero <span class="req" aria-hidden="true">*</span></span>
+                                <div class="choice-grid" role="radiogroup" aria-label="Gênero" data-validates="genero">
+                                    {% set generos = [
+                                        ('Masculino', 'fa-mars'),
+                                        ('Feminino', 'fa-venus'),
+                                        ('Outro', 'fa-venus-mars'),
+                                        ('Prefiro não dizer', 'fa-circle-question')
+                                    ] %}
+                                    {% for value, icon in generos %}
+                                    <label class="choice-card">
+                                        <input type="radio" name="genero" value="{{ value }}" {% if prefill.genero == value %}checked{% endif %} required>
+                                        <span class="choice-inner">
+                                            <i class="fa-solid {{ icon }}"></i>
+                                            <span>{{ value }}</span>
+                                        </span>
+                                    </label>
+                                    {% endfor %}
                                 </div>
                                 <div class="field-help" data-default="Use a opção que melhor te representa.">Use a opção que melhor te representa.</div>
                             </div>
 
-                            <div class="field col-4">
-                                <label for="estado_civil" class="field-label">Estado Civil</label>
-                                <div class="input-wrap">
-                                    <i class="fa-solid fa-heart input-icon"></i>
-                                    <select class="input select" id="estado_civil" name="estado_civil">
-                                        <option value="" disabled {% if not prefill.estado_civil %}selected{% endif %}>Selecione...</option>
-                                        {% for opt in ['Solteiro', 'Casado', 'Divorciado', 'Viúvo'] %}
-                                          <option value="{{ opt }}" {% if prefill.estado_civil == opt %}selected{% endif %}>{{ opt }}(a)</option>
-                                        {% endfor %}
-                                    </select>
+                            <div class="field col-12">
+                                <span class="field-label">Estado Civil</span>
+                                <div class="choice-grid choice-grid-sm" role="radiogroup" aria-label="Estado civil">
+                                    {% set civis = [
+                                        ('Solteiro',   'Solteiro(a)',   'fa-person'),
+                                        ('Casado',     'Casado(a)',     'fa-ring'),
+                                        ('Divorciado', 'Divorciado(a)', 'fa-people-arrows'),
+                                        ('Viúvo',      'Viúvo(a)',      'fa-dove')
+                                    ] %}
+                                    {% for value, label, icon in civis %}
+                                    <label class="choice-card">
+                                        <input type="radio" name="estado_civil" value="{{ value }}" {% if prefill.estado_civil == value %}checked{% endif %}>
+                                        <span class="choice-inner">
+                                            <i class="fa-solid {{ icon }}"></i>
+                                            <span>{{ label }}</span>
+                                        </span>
+                                    </label>
+                                    {% endfor %}
                                 </div>
                                 <div class="field-help" data-default="Opcional.">Opcional.</div>
                             </div>
@@ -181,7 +255,8 @@
                         </div>
                     </fieldset>
 
-                    <fieldset class="section">
+                    <!-- ===== STEP 2: Contato ===== -->
+                    <fieldset class="section step-panel" data-panel="2">
                         <div class="section-head">
                             <div class="section-icon"><i class="fa-solid fa-envelope"></i></div>
                             <div>
@@ -198,7 +273,7 @@
                                     <input type="email" class="input" id="email" name="email" placeholder="voce@exemplo.com" required autocomplete="email" value="{{ prefill.email|default('') }}">
                                     <i class="fa-solid fa-circle-check input-status"></i>
                                 </div>
-                                <div class="field-help" data-default="Usaremos para enviar o PDF gerado.">Usaremos para enviar o PDF gerado.</div>
+                                <div class="field-help" data-default="Usaremos para o cadastro.">Usaremos para o cadastro.</div>
                             </div>
 
                             <div class="field col-6">
@@ -222,7 +297,8 @@
                         </div>
                     </fieldset>
 
-                    <fieldset class="section">
+                    <!-- ===== STEP 3: Endereço ===== -->
+                    <fieldset class="section step-panel" data-panel="3">
                         <div class="section-head">
                             <div class="section-icon"><i class="fa-solid fa-location-dot"></i></div>
                             <div>
@@ -292,12 +368,13 @@
                         </div>
                     </fieldset>
 
-                    <fieldset class="section">
+                    <!-- ===== STEP 4: Observações + Revisão ===== -->
+                    <fieldset class="section step-panel" data-panel="4">
                         <div class="section-head">
                             <div class="section-icon"><i class="fa-solid fa-comment-dots"></i></div>
                             <div>
-                                <legend class="section-title">Observações</legend>
-                                <p class="section-sub">Conte-nos qualquer detalhe relevante.</p>
+                                <legend class="section-title">Quase lá!</legend>
+                                <p class="section-sub">Adicione observações e revise antes de gerar o PDF.</p>
                             </div>
                         </div>
 
@@ -309,28 +386,41 @@
                                 <div class="field-help" data-default="Esse texto aparecerá no PDF final.">Esse texto aparecerá no PDF final.</div>
                             </div>
                         </div>
+
+                        <div class="review-card">
+                            <div class="review-head">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                                <strong>Revise os dados antes de enviar</strong>
+                            </div>
+                            <dl class="review-grid" id="reviewGrid">
+                                <!-- populated by JS -->
+                            </dl>
+                        </div>
                     </fieldset>
 
-                    <label class="email-opt-in" for="receber_por_email">
-                        <input type="checkbox" id="receber_por_email" name="receber_por_email">
-                        <span class="email-opt-icon"><i class="fa-solid fa-paper-plane"></i></span>
-                        <span class="email-opt-text">
-                            <strong>Receber também por email</strong>
-                            <span>Enviaremos uma cópia do PDF para o email informado acima.</span>
-                        </span>
-                    </label>
-
-                    <div class="actions">
+                    <!-- ===== Step navigation ===== -->
+                    <div class="actions step-nav">
                         <span class="draft-status" id="draftStatus" aria-live="polite">
                             <span class="dot"></span>
                             <span class="draft-text">Rascunho automático ativo</span>
                         </span>
-                        <button type="button" class="btn btn-ghost" id="btnLimpar" title="Limpa todos os campos">
-                            <i class="fa-solid fa-eraser"></i> Limpar
-                        </button>
-                        <button type="submit" class="btn btn-primary" id="btnEnviar">
-                            <span class="spinner" aria-hidden="true"></span>
-                            <span class="btn-label"><i class="fa-solid fa-file-pdf"></i> Gerar PDF</span>
+                        <div class="nav-buttons">
+                            <button type="button" class="btn btn-ghost" id="btnPrev">
+                                <i class="fa-solid fa-arrow-left"></i> Voltar
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btnNext">
+                                Próximo <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="btnEnviar" hidden>
+                                <span class="spinner" aria-hidden="true"></span>
+                                <span class="btn-label"><i class="fa-solid fa-file-pdf"></i> Gerar PDF</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="actions secondary-actions">
+                        <button type="button" class="btn btn-ghost btn-sm" id="btnLimpar" title="Limpa todos os campos">
+                            <i class="fa-solid fa-eraser"></i> Limpar tudo
                         </button>
                     </div>
                 </form>

@@ -1,11 +1,10 @@
 /* ============================================================
-   Modern Form — Validation, server-side autosave, theme, share
+   Modern Form — landing, multi-step, validation, autosave, theme
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('cadastroForm');
     const body = document.body;
-    const initialResumeUrl = body.dataset.resumeUrl || '';
 
     /* ---------- Theme toggle ---------- */
     const themeToggle = document.getElementById('themeToggle');
@@ -23,14 +22,31 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (!form) return; // Pages that don't have the form (admin) stop here.
+    /* ---------- Landing → Form transition ---------- */
+    const landing = document.getElementById('landing');
+    const formCard = document.getElementById('formCard');
+    const btnStart = document.getElementById('btnStart');
+
+    function showForm() {
+        if (landing) landing.hidden = true;
+        if (formCard) {
+            formCard.hidden = false;
+            formCard.classList.add('reveal');
+            setTimeout(() => formCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+            const firstInput = formCard.querySelector('.step-panel.is-active input, .step-panel.is-active select, .step-panel.is-active textarea');
+            if (firstInput) setTimeout(() => firstInput.focus(), 350);
+        }
+    }
+    if (btnStart) btnStart.addEventListener('click', showForm);
+
+    if (!form) return;
 
     /* ---------- Input masks ---------- */
-    const phoneMask = IMask(document.getElementById('telefone'), { mask: '(00) 00000-0000' });
-    const cpfMask   = IMask(document.getElementById('cpf'),      { mask: '000.000.000-00' });
-    const cepMask   = IMask(document.getElementById('cep'),      { mask: '00000-000' });
+    IMask(document.getElementById('telefone'), { mask: '(00) 00000-0000' });
+    IMask(document.getElementById('cpf'),      { mask: '000.000.000-00' });
+    IMask(document.getElementById('cep'),      { mask: '00000-000' });
 
-    /* ---------- Helpers: field state ---------- */
+    /* ---------- Field state helpers ---------- */
     function fieldOf(input) { return input.closest('.field'); }
     function setHelp(input, msg) {
         const f = fieldOf(input); if (!f) return;
@@ -41,14 +57,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const f = fieldOf(input); if (!f) return;
         f.classList.add('is-valid');
         f.classList.remove('is-invalid');
-        input.setCustomValidity('');
+        if (input.setCustomValidity) input.setCustomValidity('');
         setHelp(input, null);
     }
     function setInvalid(input, msg) {
         const f = fieldOf(input); if (!f) return;
         f.classList.add('is-invalid');
         f.classList.remove('is-valid');
-        input.setCustomValidity(msg || 'Inválido');
+        if (input.setCustomValidity) input.setCustomValidity(msg || 'Inválido');
         setHelp(input, msg);
     }
 
@@ -103,10 +119,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!isMaiorDeIdade(el.value)) return { ok: false, msg: 'Você precisa ter 18 anos ou mais.' };
             return { ok: true };
         },
-        genero: (el) => {
-            if (!el.value) return { ok: false, msg: 'Selecione uma opção.' };
-            return { ok: true };
-        },
         email: (el) => {
             if (!el.value) return { ok: false, msg: 'Informe seu email.' };
             if (!isValidEmail(el.value)) return { ok: false, msg: 'Email inválido. Ex: nome@dominio.com' };
@@ -134,6 +146,25 @@ document.addEventListener('DOMContentLoaded', function () {
         return v.ok;
     }
 
+    /* ---------- Special validation for radio groups ---------- */
+    function validateGenero() {
+        const group = document.querySelector('[data-validates="genero"]');
+        if (!group) return true;
+        const checked = group.querySelector('input[type="radio"]:checked');
+        if (checked) {
+            group.classList.remove('is-invalid');
+            group.classList.add('is-valid');
+            const help = group.parentElement.querySelector('.field-help');
+            if (help) help.textContent = help.dataset.default || '';
+            return true;
+        }
+        group.classList.add('is-invalid');
+        group.classList.remove('is-valid');
+        const help = group.parentElement.querySelector('.field-help');
+        if (help) help.textContent = 'Selecione uma opção.';
+        return false;
+    }
+
     Object.keys(validators).forEach(name => {
         const el = document.getElementById(name);
         if (!el) return;
@@ -158,8 +189,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (conf.value) runValidator('email_confirmacao');
     });
 
-    // Optional fields also trigger autosave
-    ['estado_civil','nome_mae','profissao','telefone','cep','logradouro',
+    // Radios + optional fields
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.name === 'genero') validateGenero();
+            updateProgress();
+            scheduleAutosave();
+        });
+    });
+
+    ['nome_mae','profissao','telefone','cep','logradouro',
      'numero','complemento','bairro','cidade','estado'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -178,18 +217,20 @@ document.addEventListener('DOMContentLoaded', function () {
         charCounter.classList.toggle('danger', n > 480);
     });
 
-    /* ---------- Progress indicator ---------- */
+    /* ---------- Progress (overall) ---------- */
     const progressFill = document.getElementById('progressFill');
     const progressPct = document.getElementById('progressPct');
     const progressBar = document.getElementById('progressBar');
-    const requiredIds = ['nome','cpf','rg','data_nascimento','genero','email','email_confirmacao','observacao'];
     function updateProgress() {
+        const required = ['nome','cpf','rg','data_nascimento','email','email_confirmacao','observacao'];
         let filled = 0;
-        requiredIds.forEach(id => {
+        required.forEach(id => {
             const el = document.getElementById(id);
             if (el && el.value && el.value.trim() !== '') filled++;
         });
-        const pct = Math.round((filled / requiredIds.length) * 100);
+        if (document.querySelector('input[name="genero"]:checked')) filled++;
+        const total = required.length + 1;
+        const pct = Math.round((filled / total) * 100);
         progressFill.style.width = pct + '%';
         progressPct.textContent = pct + '%';
         progressBar.setAttribute('aria-valuenow', pct);
@@ -235,13 +276,11 @@ document.addEventListener('DOMContentLoaded', function () {
         fd.forEach((v, k) => { obj[k] = v; });
         return obj;
     }
-
     function setDraftState(state, text) {
         draftStatus.classList.remove('saved', 'saving');
         if (state) draftStatus.classList.add(state);
         draftText.textContent = text;
     }
-
     async function saveDraft() {
         if (inflight) return;
         setDraftState('saving', 'Salvando...');
@@ -265,31 +304,120 @@ document.addEventListener('DOMContentLoaded', function () {
             inflight = null;
         }
     }
-
     function scheduleAutosave() {
         setDraftState('saving', 'Salvando...');
         clearTimeout(saveTimer);
         saveTimer = setTimeout(saveDraft, 1000);
     }
 
-    /* ---------- Submit ---------- */
+    /* ---------- Multi-step navigation ---------- */
+    const STEP_TOTAL = 4;
+    let currentStep = 1;
+    const stepperItems = document.querySelectorAll('#stepper .step');
+    const panels = document.querySelectorAll('.step-panel');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
     const btnEnviar = document.getElementById('btnEnviar');
-    form.addEventListener('submit', function (event) {
+    const stepCurrent = document.getElementById('stepCurrent');
+
+    // required fields per step (only those that block "Próximo")
+    const stepRequired = {
+        1: ['nome', 'cpf', 'rg', 'data_nascimento'],   // genero validated separately
+        2: ['email', 'email_confirmacao'],
+        3: [],
+        4: ['observacao'],
+    };
+
+    function showStep(step) {
+        currentStep = Math.max(1, Math.min(STEP_TOTAL, step));
+        panels.forEach(p => p.classList.toggle('is-active', Number(p.dataset.panel) === currentStep));
+        stepperItems.forEach(s => {
+            const n = Number(s.dataset.step);
+            s.classList.toggle('is-active', n === currentStep);
+            s.classList.toggle('is-done', n < currentStep);
+        });
+        stepCurrent.textContent = currentStep;
+        btnPrev.hidden = currentStep === 1;
+        btnNext.hidden = currentStep === STEP_TOTAL;
+        btnEnviar.hidden = currentStep !== STEP_TOTAL;
+
+        if (currentStep === STEP_TOTAL) renderReview();
+
+        const top = formCard.getBoundingClientRect().top + window.scrollY - 16;
+        window.scrollTo({ top, behavior: 'smooth' });
+
+        const firstInput = panels[currentStep - 1].querySelector('input:not([type="hidden"]):not([type="radio"]), select, textarea');
+        if (firstInput) setTimeout(() => firstInput.focus({ preventScroll: true }), 350);
+    }
+
+    function validateStep(step) {
         let allOk = true;
         let firstInvalid = null;
-        Object.keys(validators).forEach(name => {
-            const ok = runValidator(name);
-            if (!ok && !firstInvalid) firstInvalid = document.getElementById(name);
+        const requiredIds = stepRequired[step] || [];
+        requiredIds.forEach(id => {
+            const ok = runValidator(id);
+            if (!ok && !firstInvalid) firstInvalid = document.getElementById(id);
             if (!ok) allOk = false;
         });
-        if (!allOk) {
-            event.preventDefault();
-            if (firstInvalid) {
-                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => firstInvalid.focus({ preventScroll: true }), 350);
-            }
-            return;
+        if (step === 1) {
+            const ok = validateGenero();
+            if (!ok && !firstInvalid) firstInvalid = document.querySelector('[data-validates="genero"]');
+            if (!ok) allOk = false;
         }
+        if (firstInvalid) {
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (firstInvalid.focus) setTimeout(() => firstInvalid.focus({ preventScroll: true }), 250);
+        }
+        return allOk;
+    }
+
+    btnNext.addEventListener('click', () => {
+        if (validateStep(currentStep)) showStep(currentStep + 1);
+    });
+    btnPrev.addEventListener('click', () => showStep(currentStep - 1));
+
+    // Allow clicking a step in the stepper (only to go back to a previously-completed one)
+    stepperItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const target = Number(item.dataset.step);
+            if (target < currentStep) showStep(target);
+        });
+    });
+
+    /* ---------- Review (step 4) ---------- */
+    function renderReview() {
+        const grid = document.getElementById('reviewGrid');
+        const fields = [
+            ['Nome', 'nome'],
+            ['CPF', 'cpf'],
+            ['RG', 'rg'],
+            ['Nascimento', 'data_nascimento'],
+            ['Email', 'email'],
+            ['Telefone', 'telefone'],
+            ['Cidade', 'cidade'],
+            ['UF', 'estado'],
+        ];
+        let html = '';
+        fields.forEach(([label, id]) => {
+            const el = document.getElementById(id);
+            const v = (el && el.value) ? el.value : '—';
+            html += `<div class="review-row"><dt>${label}</dt><dd>${escapeHtml(v)}</dd></div>`;
+        });
+        const genero = document.querySelector('input[name="genero"]:checked');
+        html = `<div class="review-row"><dt>Gênero</dt><dd>${escapeHtml(genero ? genero.value : '—')}</dd></div>` + html;
+        grid.innerHTML = html;
+    }
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    /* ---------- Submit ---------- */
+    form.addEventListener('submit', function (event) {
+        let allOk = true;
+        for (let step = 1; step <= STEP_TOTAL; step++) {
+            if (!validateStep(step)) { allOk = false; showStep(step); break; }
+        }
+        if (!allOk) { event.preventDefault(); return; }
         btnEnviar.classList.add('loading');
         btnEnviar.disabled = true;
         setTimeout(() => {
@@ -307,26 +435,20 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location.reload();
     });
 
-    /* ---------- Share / resume link modal ---------- */
+    /* ---------- Share modal ---------- */
     const shareModal = document.getElementById('shareModal');
     const btnShare = document.getElementById('btnShare');
     const btnCopy = document.getElementById('btnCopy');
     const shareUrl = document.getElementById('shareUrl');
-
     function openModal() { shareModal.classList.add('open'); shareModal.setAttribute('aria-hidden', 'false'); }
     function closeModal() { shareModal.classList.remove('open'); shareModal.setAttribute('aria-hidden', 'true'); }
-
     if (btnShare) btnShare.addEventListener('click', openModal);
     shareModal.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
     if (btnCopy) {
         btnCopy.addEventListener('click', async () => {
-            try {
-                await navigator.clipboard.writeText(shareUrl.value);
-            } catch (e) {
-                shareUrl.select(); document.execCommand('copy');
-            }
+            try { await navigator.clipboard.writeText(shareUrl.value); }
+            catch (e) { shareUrl.select(); document.execCommand('copy'); }
             const span = btnCopy.querySelector('span');
             const orig = span.textContent;
             span.textContent = 'Copiado!';
@@ -338,15 +460,24 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    /* ---------- Keyboard shortcut ---------- */
-    form.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            e.preventDefault();
-            btnEnviar.click();
-        }
-    });
-
     /* ---------- Init ---------- */
     updateProgress();
     setDraftState(null, 'Rascunho automático ativo');
+
+    // If user has a saved draft, jump straight to the form (landing was already hidden server-side)
+    if (body.dataset.hasDraft === 'true') {
+        // Keep step 1 active by default, but if first step is fully valid, advance
+        // (subtle nicety: skip ahead until first incomplete step)
+        for (let s = 1; s < STEP_TOTAL; s++) {
+            const ids = stepRequired[s] || [];
+            const allFilled = ids.every(id => {
+                const el = document.getElementById(id);
+                return el && el.value && el.value.trim() !== '';
+            });
+            const generoOk = s === 1 ? !!document.querySelector('input[name="genero"]:checked') : true;
+            if (allFilled && generoOk) currentStep = s + 1;
+            else break;
+        }
+        showStep(currentStep);
+    }
 });
