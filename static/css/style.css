@@ -1135,6 +1135,13 @@ body::after {
     margin-top: 4px;
 }
 .choice-grid-sm { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.choice-grid-row { grid-template-columns: repeat(4, 1fr); }
+.choice-grid-row .choice-inner { padding: 12px 6px; min-height: 78px; }
+.choice-grid-row .choice-inner i { font-size: 18px; }
+.choice-grid-row .choice-inner span { font-size: 13px; }
+@media (max-width: 640px) {
+    .choice-grid-row { grid-template-columns: repeat(2, 1fr); }
+}
 
 .choice-card {
     position: relative;
