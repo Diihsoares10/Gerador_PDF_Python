@@ -1,203 +1,349 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulário de Cadastro Profissional</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .container {
-            max-width: 900px;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        }
-        .card-header {
-            background-color: #0d6efd;
-            color: white;
-            font-weight: bold;
-        }
-        .form-label.required::after {
-            content: " *";
-            color: red;
-        }
-        .is-invalid + .invalid-feedback {
-            display: block;
-        }
-    </style>
+    <meta name="description" content="Formulário digital moderno para cadastro com geração automática de PDF.">
+    <meta name="theme-color" content="#6366f1">
+    <title>Cadastro Digital — Formulário Moderno</title>
+
+    <!-- Inter typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome (icons) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <!-- Inline pre-paint to avoid theme flash -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="card-header text-center py-3">
-                <h2 class="mb-0"><i class="fas fa-file-alt me-2"></i>Formulário de Cadastro</h2>
+    <!-- Flash messages (toast style) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-stack" role="status" aria-live="polite">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        <i class="fa-solid {% if category == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+                        <span class="flash-msg">{{ message }}</span>
+                        <button type="button" class="flash-close" aria-label="Fechar" onclick="this.parentElement.remove()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                {% endfor %}
             </div>
-            <div class="card-body p-4">
-                
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+        {% endif %}
+    {% endwith %}
 
+    <main class="app-shell">
+        <!-- Top bar: brand + theme toggle -->
+        <header class="top-bar">
+            <div class="brand">
+                <div class="brand-logo" aria-hidden="true"><i class="fa-solid fa-feather-pointed"></i></div>
+                <div>
+                    <span class="brand-name">Cadastro Digital</span>
+                    <span class="brand-sub">Preenchimento rápido e seguro</span>
+                </div>
+            </div>
+            <button type="button" class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+                <i class="fa-solid fa-moon" id="themeIcon"></i>
+            </button>
+        </header>
+
+        <!-- Main card -->
+        <section class="glass-card" aria-labelledby="formTitle">
+            <div class="card-head">
+                <h1 id="formTitle">Vamos te conhecer melhor</h1>
+                <p>Preencha os campos abaixo. Levamos cerca de 2 minutos e geramos seu PDF automaticamente.</p>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-wrap">
+                <div class="progress-meta">
+                    <span><i class="fa-solid fa-list-check"></i> Progresso do formulário</span>
+                    <span><strong id="progressPct">0%</strong> concluído</span>
+                </div>
+                <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="card-body">
                 <form id="cadastroForm" action="/" method="POST" novalidate>
-                    
-                    <!-- Seção: Dados Pessoais -->
-                    <fieldset class="mb-4">
-                        <legend class="h5 border-bottom pb-2 text-primary">Dados Pessoais</legend>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="nome" class="form-label required">Nome Completo</label>
-                                <input type="text" class="form-control" id="nome" name="nome" minlength="3" required>
-                                <div class="invalid-feedback">Digite o nome completo (mínimo 3 caracteres).</div>
+
+                    <!-- ============== Dados Pessoais ============== -->
+                    <fieldset class="section">
+                        <div class="section-head">
+                            <div class="section-icon"><i class="fa-solid fa-user"></i></div>
+                            <div>
+                                <legend class="section-title">Dados Pessoais</legend>
+                                <p class="section-sub">Informações de identificação básica.</p>
                             </div>
-                            
-                            <div class="col-md-3">
-                                <label for="cpf" class="form-label required">CPF</label>
-                                <input type="text" class="form-control" id="cpf" name="cpf" placeholder="000.000.000-00" required>
-                                <div class="invalid-feedback">CPF inválido.</div>
+                        </div>
+
+                        <div class="grid">
+                            <div class="field col-6">
+                                <label for="nome" class="field-label">Nome Completo <span class="req" aria-hidden="true">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-id-card input-icon"></i>
+                                    <input type="text" class="input" id="nome" name="nome" placeholder="Ex: Maria da Silva" minlength="3" required autocomplete="name">
+                                    <i class="fa-solid fa-circle-check input-status"></i>
+                                </div>
+                                <div class="field-help" data-default="Como aparece em seus documentos.">Como aparece em seus documentos.</div>
                             </div>
 
-                            <div class="col-md-3">
-                                <label for="rg" class="form-label required">RG</label>
-                                <input type="text" class="form-control" id="rg" name="rg" required>
-                                <div class="invalid-feedback">RG é obrigatório.</div>
+                            <div class="field col-3">
+                                <label for="cpf" class="field-label">CPF <span class="req" aria-hidden="true">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-fingerprint input-icon"></i>
+                                    <input type="text" class="input" id="cpf" name="cpf" placeholder="000.000.000-00" required inputmode="numeric" autocomplete="off">
+                                    <i class="fa-solid fa-circle-check input-status"></i>
+                                </div>
+                                <div class="field-help" data-default="Apenas números — formataremos para você.">Apenas números — formataremos para você.</div>
                             </div>
 
-                            <div class="col-md-4">
-                                <label for="data_nascimento" class="form-label required">Data de Nascimento</label>
-                                <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" required>
-                                <div class="invalid-feedback">Você deve ser maior de 18 anos.</div>
+                            <div class="field col-3">
+                                <label for="rg" class="field-label">RG <span class="req" aria-hidden="true">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-address-card input-icon"></i>
+                                    <input type="text" class="input" id="rg" name="rg" placeholder="00.000.000-0" required>
+                                    <i class="fa-solid fa-circle-check input-status"></i>
+                                </div>
+                                <div class="field-help" data-default="Conforme emitido pelo seu estado.">Conforme emitido pelo seu estado.</div>
                             </div>
 
-                            <div class="col-md-4">
-                                <label for="genero" class="form-label required">Gênero</label>
-                                <select class="form-select" id="genero" name="genero" required>
-                                    <option value="" selected disabled>Selecione...</option>
-                                    <option value="Masculino">Masculino</option>
-                                    <option value="Feminino">Feminino</option>
-                                    <option value="Outro">Outro</option>
-                                    <option value="Prefiro não dizer">Prefiro não dizer</option>
-                                </select>
-                                <div class="invalid-feedback">Selecione uma opção.</div>
+                            <div class="field col-4">
+                                <label for="data_nascimento" class="field-label">Data de Nascimento <span class="req" aria-hidden="true">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-cake-candles input-icon"></i>
+                                    <input type="date" class="input" id="data_nascimento" name="data_nascimento" required autocomplete="bday">
+                                    <i class="fa-solid fa-circle-check input-status"></i>
+                                </div>
+                                <div class="field-help" data-default="Você precisa ter 18 anos ou mais.">Você precisa ter 18 anos ou mais.</div>
                             </div>
 
-                            <div class="col-md-4">
-                                <label for="estado_civil" class="form-label">Estado Civil</label>
-                                <select class="form-select" id="estado_civil" name="estado_civil">
-                                    <option value="" selected disabled>Selecione...</option>
-                                    <option value="Solteiro">Solteiro</option>
-                                    <option value="Casado">Casado</option>
-                                    <option value="Divorciado">Divorciado</option>
-                                    <option value="Viúvo">Viúvo</option>
-                                </select>
+                            <div class="field col-4">
+                                <label for="genero" class="field-label">Gênero <span class="req" aria-hidden="true">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-venus-mars input-icon"></i>
+                                    <select class="input select" id="genero" name="genero" required>
+                                        <option value="" selected disabled>Selecione...</option>
+                                        <option value="Masculino">Masculino</option>
+                                        <option value="Feminino">Feminino</option>
+                                        <option value="Outro">Outro</option>
+                                        <option value="Prefiro não dizer">Prefiro não dizer</option>
+                                    </select>
+                                    <i class="fa-solid fa-circle-check input-status"></i>
+                                </div>
+                                <div class="field-help" data-default="Use a opção que melhor te representa.">Use a opção que melhor te representa.</div>
                             </div>
 
-                            <div class="col-md-6">
-                                <label for="nome_mae" class="form-label">Nome da Mãe</label>
-                                <input type="text" class="form-control" id="nome_mae" name="nome_mae">
+                            <div class="field col-4">
+                                <label for="estado_civil" class="field-label">Estado Civil</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-heart input-icon"></i>
+                                    <select class="input select" id="estado_civil" name="estado_civil">
+                                        <option value="" selected disabled>Selecione...</option>
+                                        <option value="Solteiro">Solteiro(a)</option>
+                                        <option value="Casado">Casado(a)</option>
+                                        <option value="Divorciado">Divorciado(a)</option>
+                                        <option value="Viúvo">Viúvo(a)</option>
+                                    </select>
+                                </div>
+                                <div class="field-help" data-default="Opcional.">Opcional.</div>
                             </div>
-                            
-                            <div class="col-md-6">
-                                <label for="profissao" class="form-label">Profissão</label>
-                                <input type="text" class="form-control" id="profissao" name="profissao">
+
+                            <div class="field col-6">
+                                <label for="nome_mae" class="field-label">Nome da Mãe</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-person-dress input-icon"></i>
+                                    <input type="text" class="input" id="nome_mae" name="nome_mae" placeholder="Nome completo da mãe">
+                                </div>
+                                <div class="field-help" data-default="Opcional.">Opcional.</div>
+                            </div>
+
+                            <div class="field col-6">
+                                <label for="profissao" class="field-label">Profissão</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-briefcase input-icon"></i>
+                                    <input type="text" class="input" id="profissao" name="profissao" placeholder="Ex: Designer, Engenheira...">
+                                </div>
+                                <div class="field-help" data-default="Opcional.">Opcional.</div>
                             </div>
                         </div>
                     </fieldset>
 
-                    <!-- Seção: Contato -->
-                    <fieldset class="mb-4">
-                        <legend class="h5 border-bottom pb-2 text-primary">Contato</legend>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label required">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                                <div class="invalid-feedback">Email inválido.</div>
+                    <!-- ============== Contato ============== -->
+                    <fieldset class="section">
+                        <div class="section-head">
+                            <div class="section-icon"><i class="fa-solid fa-envelope"></i></div>
+                            <div>
+                                <legend class="section-title">Contato</legend>
+                                <p class="section-sub">Como podemos falar com você.</p>
                             </div>
-                            <div class="col-md-6">
-                                <label for="email_confirmacao" class="form-label required">Confirmar Email</label>
-                                <input type="email" class="form-control" id="email_confirmacao" name="email_confirmacao" required>
-                                <div class="invalid-feedback">Os emails não coincidem.</div>
+                        </div>
+
+                        <div class="grid">
+                            <div class="field col-6">
+                                <label for="email" class="field-label">Email <span class="req" aria-hidden="true">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-at input-icon"></i>
+                                    <input type="email" class="input" id="email" name="email" placeholder="voce@exemplo.com" required autocomplete="email">
+                                    <i class="fa-solid fa-circle-check input-status"></i>
+                                </div>
+                                <div class="field-help" data-default="Usaremos para enviar o PDF gerado.">Usaremos para enviar o PDF gerado.</div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="telefone" class="form-label">Telefone Celular</label>
-                                <input type="text" class="form-control" id="telefone" name="telefone" placeholder="(00) 00000-0000">
+
+                            <div class="field col-6">
+                                <label for="email_confirmacao" class="field-label">Confirmar Email <span class="req" aria-hidden="true">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-shield-halved input-icon"></i>
+                                    <input type="email" class="input" id="email_confirmacao" name="email_confirmacao" placeholder="Repita o email acima" required autocomplete="email">
+                                    <i class="fa-solid fa-circle-check input-status"></i>
+                                </div>
+                                <div class="field-help" data-default="Os dois emails precisam ser iguais.">Os dois emails precisam ser iguais.</div>
+                            </div>
+
+                            <div class="field col-6">
+                                <label for="telefone" class="field-label">Telefone Celular</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-mobile-screen-button input-icon"></i>
+                                    <input type="tel" class="input" id="telefone" name="telefone" placeholder="(00) 00000-0000" autocomplete="tel">
+                                </div>
+                                <div class="field-help" data-default="Com DDD. Opcional.">Com DDD. Opcional.</div>
                             </div>
                         </div>
                     </fieldset>
 
-                    <!-- Seção: Endereço -->
-                    <fieldset class="mb-4">
-                        <legend class="h5 border-bottom pb-2 text-primary">Endereço</legend>
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label for="cep" class="form-label">CEP</label>
-                                <input type="text" class="form-control" id="cep" name="cep" placeholder="00000-000">
+                    <!-- ============== Endereço ============== -->
+                    <fieldset class="section">
+                        <div class="section-head">
+                            <div class="section-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div>
+                                <legend class="section-title">Endereço</legend>
+                                <p class="section-sub">Digite o CEP — preenchemos o restante automaticamente.</p>
                             </div>
-                            <div class="col-md-7">
-                                <label for="logradouro" class="form-label">Logradouro</label>
-                                <input type="text" class="form-control" id="logradouro" name="logradouro">
+                        </div>
+
+                        <div class="grid">
+                            <div class="field col-3">
+                                <label for="cep" class="field-label">CEP</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-map-pin input-icon"></i>
+                                    <input type="text" class="input" id="cep" name="cep" placeholder="00000-000" autocomplete="postal-code" inputmode="numeric">
+                                    <i class="fa-solid fa-circle-check input-status"></i>
+                                </div>
+                                <div class="field-help" data-default="Buscamos o endereço para você.">Buscamos o endereço para você.</div>
                             </div>
-                            <div class="col-md-2">
-                                <label for="numero" class="form-label">Número</label>
-                                <input type="text" class="form-control" id="numero" name="numero">
+                            <div class="field col-7">
+                                <label for="logradouro" class="field-label">Logradouro</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-road input-icon"></i>
+                                    <input type="text" class="input" id="logradouro" name="logradouro" placeholder="Rua, Avenida..." autocomplete="address-line1">
+                                </div>
+                                <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
-                            <div class="col-md-4">
-                                <label for="complemento" class="form-label">Complemento</label>
-                                <input type="text" class="form-control" id="complemento" name="complemento">
+                            <div class="field col-2">
+                                <label for="numero" class="field-label">Número</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-hashtag input-icon"></i>
+                                    <input type="text" class="input" id="numero" name="numero" placeholder="123">
+                                </div>
+                                <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
-                            <div class="col-md-4">
-                                <label for="bairro" class="form-label">Bairro</label>
-                                <input type="text" class="form-control" id="bairro" name="bairro">
+                            <div class="field col-4">
+                                <label for="complemento" class="field-label">Complemento</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-building input-icon"></i>
+                                    <input type="text" class="input" id="complemento" name="complemento" placeholder="Apto, sala, bloco">
+                                </div>
+                                <div class="field-help" data-default="Opcional.">Opcional.</div>
                             </div>
-                            <div class="col-md-3">
-                                <label for="cidade" class="form-label">Cidade</label>
-                                <input type="text" class="form-control" id="cidade" name="cidade">
+                            <div class="field col-4">
+                                <label for="bairro" class="field-label">Bairro</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-tree-city input-icon"></i>
+                                    <input type="text" class="input" id="bairro" name="bairro" placeholder="Seu bairro" autocomplete="address-level3">
+                                </div>
+                                <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
-                            <div class="col-md-1">
-                                <label for="estado" class="form-label">UF</label>
-                                <input type="text" class="form-control" id="estado" name="estado" maxlength="2">
+                            <div class="field col-3">
+                                <label for="cidade" class="field-label">Cidade</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-city input-icon"></i>
+                                    <input type="text" class="input" id="cidade" name="cidade" placeholder="Sua cidade" autocomplete="address-level2">
+                                </div>
+                                <div class="field-help" data-default="&nbsp;">&nbsp;</div>
+                            </div>
+                            <div class="field col-2">
+                                <label for="estado" class="field-label">UF</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-flag input-icon"></i>
+                                    <input type="text" class="input" id="estado" name="estado" maxlength="2" placeholder="SP" autocomplete="address-level1" style="text-transform:uppercase">
+                                </div>
+                                <div class="field-help" data-default="&nbsp;">&nbsp;</div>
                             </div>
                         </div>
                     </fieldset>
 
-                    <!-- Seção: Outros -->
-                    <fieldset class="mb-4">
-                        <legend class="h5 border-bottom pb-2 text-primary">Outros</legend>
-                        <div class="mb-3">
-                            <label for="observacao" class="form-label required">Observação</label>
-                            <textarea class="form-control" id="observacao" name="observacao" rows="4" maxlength="500" required></textarea>
-                            <div class="form-text text-end"><span id="charCount">0</span>/500</div>
-                            <div class="invalid-feedback">Campo obrigatório (máx 500 caracteres).</div>
+                    <!-- ============== Observações ============== -->
+                    <fieldset class="section">
+                        <div class="section-head">
+                            <div class="section-icon"><i class="fa-solid fa-comment-dots"></i></div>
+                            <div>
+                                <legend class="section-title">Observações</legend>
+                                <p class="section-sub">Conte-nos qualquer detalhe relevante.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid">
+                            <div class="field col-12">
+                                <label for="observacao" class="field-label">Observação <span class="req" aria-hidden="true">*</span></label>
+                                <textarea class="input textarea no-icon" id="observacao" name="observacao" rows="4" maxlength="500" required placeholder="Escreva aqui informações adicionais (até 500 caracteres)..."></textarea>
+                                <div class="char-counter" id="charCounter"><span id="charCount">0</span>/500</div>
+                                <div class="field-help" data-default="Esse texto aparecerá no PDF final.">Esse texto aparecerá no PDF final.</div>
+                            </div>
                         </div>
                     </fieldset>
 
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="button" class="btn btn-secondary me-md-2" id="btnLimpar">Limpar</button>
-                        <button type="button" class="btn btn-info me-md-2 text-white" id="btnSalvarRascunho">Salvar Rascunho</button>
-                        <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-file-pdf me-2"></i>Gerar PDF</button>
+                    <!-- Actions -->
+                    <div class="actions">
+                        <span class="draft-status" id="draftStatus" aria-live="polite">
+                            <span class="dot"></span>
+                            <span class="draft-text">Rascunho automático ativo</span>
+                        </span>
+                        <button type="button" class="btn btn-ghost" id="btnLimpar" title="Limpa todos os campos">
+                            <i class="fa-solid fa-eraser"></i> Limpar
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btnSalvarRascunho" title="Salva o rascunho manualmente">
+                            <i class="fa-solid fa-floppy-disk"></i> Salvar Rascunho
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="btnEnviar">
+                            <span class="spinner" aria-hidden="true"></span>
+                            <span class="btn-label"><i class="fa-solid fa-file-pdf"></i> Gerar PDF</span>
+                        </button>
                     </div>
                 </form>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <p class="footer-note">
+            <i class="fa-solid fa-shield-halved"></i>
+            Seus dados são processados com segurança e nunca compartilhados.
+        </p>
+    </main>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/imask/6.4.3/imask.min.js"></script>
     <script src="/static/js/script.js"></script>
 </body>

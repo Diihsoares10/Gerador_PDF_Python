@@ -17,3 +17,4 @@ Flask-based web application for user registration with automatic PDF report gene
 
 ## Recent Changes
 - 2026-04-24: Imported from GitHub. Bound Flask to `0.0.0.0:5000` and configured deployment.
+- 2026-04-24: UI redesign — modern glassmorphism layout, light/dark mode, icons inside fields, real-time validation with inline help, progress indicator, ViaCEP autofill, autosaving draft, Inter typography, animated background blobs, accessibility (aria-live, prefers-reduced-motion, keyboard shortcut Ctrl/Cmd+Enter to submit).
