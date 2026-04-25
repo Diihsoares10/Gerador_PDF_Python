@@ -45,3 +45,11 @@ Flask-based web application for user registration with automatic PDF report gene
 - New endpoint `POST /api/lookup` (`routes.py`): accepts `{cpf}`, validates format with the official mod-11 algorithm (`_validar_cpf`), applies a per-session rate limit (8 attempts/min, returns HTTP 429), then queries `Submission` matching either the digits-only or formatted version of the CPF (column already indexed). Returns the resume URL + name + progress + status, or HTTP 400/404 with a generic message — never reveals which CPFs exist.
 - Landing screen got a secondary button **"Já tenho cadastro · continuar pelo CPF"** that swaps to a dedicated lookup card (`#lookupCard`): icon, big centered CPF input with IMask, "Buscar cadastro" button with spinner, and "Não tenho cadastro — começar do zero" fallback.
 - On a successful match the JS shows a personalised greeting (`Olá, <primeiro nome>`) and redirects the browser to the resume URL after 800ms, dropping the user back into the multi-step form pre-filled with everything they had.
+
+## Color palette refresh (Apr 2026)
+- Replaced the old indigo→purple→pink palette with a modern **Indigo + Sky + Teal** SaaS palette (no magenta/pink). The brand colors now read as more professional/trustworthy.
+- New CSS variables in `:root` and `[data-theme="dark"]` (`static/css/style.css`):
+  - **Light**: `--primary #4f46e5`, `--primary-hover #4338ca`, `--primary-active #3730a3`, `--secondary #0ea5e9`, `--tertiary #14b8a6`. Background gradient is now `#eef2ff → #e0f2fe → #ccfbf1`. Blobs use indigo, sky, teal.
+  - **Dark**: `--primary #818cf8`, `--primary-hover #a5b4fc`, `--primary-active #6366f1`, `--secondary #38bdf8`, `--tertiary #2dd4bf`. Background gradient `#0b1226 → #0f1a3a → #0c2438`. Blobs lifted to stay visible on the deeper navy base.
+- Existing tokens (`--accent`, `--accent-2`, `--accent-gradient`, `--field-focus`, `--field-focus-ring`) now alias to the new primary, so every component (buttons, inputs, progress bar, stepper, choice-cards, modals) updated automatically without touching component-level CSS.
+- Brand renamed in `templates/index.html`: header now says **"Cadastramento!"** (was "Cadastro Digital"); `<title>` and `theme-color` meta tag updated to match.

@@ -3,32 +3,44 @@
    ============================================================ */
 
 :root {
-    /* Light theme */
-    --bg-gradient: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 50%, #fce7f3 100%);
-    --bg-blob-1: radial-gradient(circle, rgba(99, 102, 241, 0.35), transparent 60%);
-    --bg-blob-2: radial-gradient(circle, rgba(236, 72, 153, 0.30), transparent 60%);
-    --bg-blob-3: radial-gradient(circle, rgba(56, 189, 248, 0.30), transparent 60%);
+    /* ============================================================
+       Light theme — Modern SaaS palette (Indigo + Sky + Teal)
+       Primary trust color: indigo  •  Accent: sky/teal
+       No magenta/pink — replaced by cool blues for a more
+       professional, trustworthy feel.
+       ============================================================ */
+    --bg-gradient: linear-gradient(135deg, #eef2ff 0%, #e0f2fe 50%, #ccfbf1 100%);
+    --bg-blob-1: radial-gradient(circle, rgba(79, 70, 229, 0.32), transparent 60%);
+    --bg-blob-2: radial-gradient(circle, rgba(14, 165, 233, 0.28), transparent 60%);
+    --bg-blob-3: radial-gradient(circle, rgba(20, 184, 166, 0.24), transparent 60%);
 
-    --surface: rgba(255, 255, 255, 0.72);
-    --surface-strong: rgba(255, 255, 255, 0.92);
-    --surface-border: rgba(255, 255, 255, 0.55);
-    --surface-shadow: 0 20px 60px -20px rgba(60, 25, 120, 0.30);
+    --surface: rgba(255, 255, 255, 0.78);
+    --surface-strong: rgba(255, 255, 255, 0.94);
+    --surface-border: rgba(255, 255, 255, 0.6);
+    --surface-shadow: 0 20px 60px -20px rgba(30, 64, 175, 0.25);
 
-    --field-bg: rgba(255, 255, 255, 0.75);
+    --field-bg: rgba(255, 255, 255, 0.8);
     --field-border: rgba(15, 23, 42, 0.10);
-    --field-border-hover: rgba(99, 102, 241, 0.35);
-    --field-focus: #6366f1;
-    --field-focus-ring: rgba(99, 102, 241, 0.18);
+    --field-border-hover: rgba(79, 70, 229, 0.40);
+    --field-focus: #4f46e5;
+    --field-focus-ring: rgba(79, 70, 229, 0.18);
 
-    --text-primary: #1e1b4b;
-    --text-secondary: #4b5563;
-    --text-muted: #6b7280;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
     --text-on-accent: #ffffff;
 
-    --accent: #6366f1;
-    --accent-2: #8b5cf6;
-    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-    --accent-shadow: 0 14px 30px -10px rgba(99, 102, 241, 0.55);
+    --primary:        #4f46e5;   /* indigo-600 — main brand */
+    --primary-hover:  #4338ca;   /* indigo-700 — hover */
+    --primary-active: #3730a3;   /* indigo-800 — pressed */
+    --primary-soft:   rgba(79, 70, 229, 0.10);
+    --secondary:      #0ea5e9;   /* sky-500 — supporting accent */
+    --tertiary:       #14b8a6;   /* teal-500 — fresh accent for gradients */
+
+    --accent: var(--primary);
+    --accent-2: var(--secondary);
+    --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 60%, #14b8a6 100%);
+    --accent-shadow: 0 14px 30px -10px rgba(79, 70, 229, 0.50);
 
     --success: #10b981;
     --success-bg: rgba(16, 185, 129, 0.10);
@@ -47,30 +59,41 @@
 }
 
 [data-theme="dark"] {
-    --bg-gradient: linear-gradient(135deg, #0b1020 0%, #161535 50%, #1f1238 100%);
-    --bg-blob-1: radial-gradient(circle, rgba(99, 102, 241, 0.28), transparent 60%);
-    --bg-blob-2: radial-gradient(circle, rgba(236, 72, 153, 0.22), transparent 60%);
-    --bg-blob-3: radial-gradient(circle, rgba(56, 189, 248, 0.20), transparent 60%);
+    /* ============================================================
+       Dark theme — same palette, lifted for AA contrast
+       (lighter indigo + brighter sky on deep navy background)
+       ============================================================ */
+    --bg-gradient: linear-gradient(135deg, #0b1226 0%, #0f1a3a 50%, #0c2438 100%);
+    --bg-blob-1: radial-gradient(circle, rgba(99, 102, 241, 0.30), transparent 60%);
+    --bg-blob-2: radial-gradient(circle, rgba(56, 189, 248, 0.24), transparent 60%);
+    --bg-blob-3: radial-gradient(circle, rgba(45, 212, 191, 0.20), transparent 60%);
 
-    --surface: rgba(20, 22, 45, 0.65);
-    --surface-strong: rgba(20, 22, 45, 0.85);
+    --surface: rgba(15, 23, 42, 0.65);
+    --surface-strong: rgba(15, 23, 42, 0.88);
     --surface-border: rgba(255, 255, 255, 0.08);
     --surface-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
 
     --field-bg: rgba(255, 255, 255, 0.04);
     --field-border: rgba(255, 255, 255, 0.10);
-    --field-border-hover: rgba(139, 92, 246, 0.50);
-    --field-focus: #a78bfa;
-    --field-focus-ring: rgba(167, 139, 250, 0.22);
+    --field-border-hover: rgba(129, 140, 248, 0.55);
+    --field-focus: #818cf8;
+    --field-focus-ring: rgba(129, 140, 248, 0.25);
 
     --text-primary: #f1f5ff;
-    --text-secondary: #c7c9d9;
-    --text-muted: #8b8fa3;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
 
-    --accent: #a78bfa;
-    --accent-2: #f472b6;
-    --accent-gradient: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #f472b6 100%);
-    --accent-shadow: 0 14px 30px -10px rgba(167, 139, 250, 0.55);
+    --primary:        #818cf8;   /* indigo-400 — pops on dark */
+    --primary-hover:  #a5b4fc;   /* indigo-300 — hover/lift */
+    --primary-active: #6366f1;   /* indigo-500 — pressed */
+    --primary-soft:   rgba(129, 140, 248, 0.14);
+    --secondary:      #38bdf8;   /* sky-400 */
+    --tertiary:       #2dd4bf;   /* teal-400 */
+
+    --accent: var(--primary);
+    --accent-2: var(--secondary);
+    --accent-gradient: linear-gradient(135deg, #818cf8 0%, #38bdf8 60%, #2dd4bf 100%);
+    --accent-shadow: 0 14px 30px -10px rgba(129, 140, 248, 0.55);
 
     --success-bg: rgba(16, 185, 129, 0.15);
     --error-bg: rgba(239, 68, 68, 0.15);
