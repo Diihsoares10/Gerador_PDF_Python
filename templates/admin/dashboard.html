@@ -124,6 +124,13 @@
                                 {% if s.status == 'completed' %}
                                 <a href="{{ url_for('admin_submission_pdf', sid=s.id) }}" title="Baixar PDF"><i class="fa-solid fa-file-pdf"></i></a>
                                 {% endif %}
+                                <form method="POST" action="{{ url_for('admin_submission_delete', sid=s.id) }}" class="inline-form" onsubmit="return confirm('Excluir o cadastro de {{ (s.nome or ('#' ~ s.id))|e }}? Essa ação não pode ser desfeita.');">
+                                    <input type="hidden" name="q" value="{{ request.args.get('q','') }}">
+                                    <input type="hidden" name="status" value="{{ request.args.get('status','') }}">
+                                    <button type="submit" class="row-action-danger" title="Excluir cadastro" aria-label="Excluir cadastro">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                         {% else %}

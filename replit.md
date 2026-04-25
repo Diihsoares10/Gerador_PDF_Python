@@ -53,3 +53,9 @@ Flask-based web application for user registration with automatic PDF report gene
   - **Dark**: `--primary #818cf8`, `--primary-hover #a5b4fc`, `--primary-active #6366f1`, `--secondary #38bdf8`, `--tertiary #2dd4bf`. Background gradient `#0b1226 → #0f1a3a → #0c2438`. Blobs lifted to stay visible on the deeper navy base.
 - Existing tokens (`--accent`, `--accent-2`, `--accent-gradient`, `--field-focus`, `--field-focus-ring`) now alias to the new primary, so every component (buttons, inputs, progress bar, stepper, choice-cards, modals) updated automatically without touching component-level CSS.
 - Brand renamed in `templates/index.html`: header now says **"Cadastramento!"** (was "Cadastro Digital"); `<title>` and `theme-color` meta tag updated to match.
+
+## Admin: delete submission (Apr 2026)
+- New protected route `POST /admin/submissions/<sid>/delete` (`routes.py`): admin-only, deletes the row from `submissions` and flashes a success message.
+- `templates/admin/dashboard.html` table: each row now has a 🗑️ icon button (red on hover) inside an inline form. JS `confirm()` asks before submitting, and the current search/status filters are preserved on the redirect back.
+- `templates/admin/detail.html`: red **"Excluir"** button next to "Baixar PDF". After deletion the user is sent back to the dashboard list with the success flash.
+- New CSS classes: `.row-action-danger` (icon button in the table), `.btn-danger` (full-size red button), `.inline-form` helper. Both reuse the existing `--error` token, so they automatically work in light and dark modes.

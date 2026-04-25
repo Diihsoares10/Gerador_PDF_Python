@@ -31,6 +31,10 @@
                 {% if s.status == 'completed' %}
                 <a href="{{ url_for('admin_submission_pdf', sid=s.id) }}" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> Baixar PDF</a>
                 {% endif %}
+                <form method="POST" action="{{ url_for('admin_submission_delete', sid=s.id) }}" class="inline-form" onsubmit="return confirm('Tem certeza que deseja excluir este cadastro? Essa ação não pode ser desfeita.');">
+                    <input type="hidden" name="from" value="detail">
+                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Excluir</button>
+                </form>
             </div>
         </header>
 

@@ -393,6 +393,24 @@ def admin_submission_pdf(sid):
     )
 
 
+@app.route("/admin/submissions/<int:sid>/delete", methods=["POST"])
+@require_login
+def admin_submission_delete(sid):
+    """Permanently delete a submission row. Admin-only."""
+    if not _require_admin():
+        return render_template("403.html"), 403
+    submission = Submission.query.get_or_404(sid)
+    nome = submission.nome or f"#{sid}"
+    db.session.delete(submission)
+    db.session.commit()
+    flash(f"Cadastro de \"{nome}\" excluído com sucesso.", "success")
+    if request.form.get("from") == "detail":
+        return redirect(url_for("admin_dashboard"))
+    return redirect(url_for("admin_dashboard",
+                            q=request.form.get("q") or None,
+                            status=request.form.get("status") or None))
+
+
 @app.route("/admin/export.csv")
 @require_login
 def admin_export_csv():
