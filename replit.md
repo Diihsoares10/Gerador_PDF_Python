@@ -59,3 +59,14 @@ Flask-based web application for user registration with automatic PDF report gene
 - `templates/admin/dashboard.html` table: each row now has a 🗑️ icon button (red on hover) inside an inline form. JS `confirm()` asks before submitting, and the current search/status filters are preserved on the redirect back.
 - `templates/admin/detail.html`: red **"Excluir"** button next to "Baixar PDF". After deletion the user is sent back to the dashboard list with the success flash.
 - New CSS classes: `.row-action-danger` (icon button in the table), `.btn-danger` (full-size red button), `.inline-form` helper. Both reuse the existing `--error` token, so they automatically work in light and dark modes.
+
+## Notify system — toasts + confirm modal (Apr 2026)
+- New file `static/js/notify.js` exposes `window.Notify`:
+  - `Notify.toast({ type, title, message, duration })` and shortcuts `Notify.success/error/warning/info(message[, title])` — slide-in cards (bottom-right on desktop, bottom-full on mobile) with icon, progress bar, hover-to-pause, click-to-dismiss, auto-dismiss after 4.5 s (errors 6 s).
+  - `Notify.confirm({ title, message, confirmText, cancelText, danger })` — returns `Promise<boolean>`, blurred backdrop, focus-trap helpers (Esc cancels, Enter confirms, focus restored).
+  - Global `submit` listener auto-intercepts any `<form data-confirm="…">` and replaces the native dialog.
+- New CSS appended to `static/css/style.css`: `.toast-container/.toast/.toast-icon/.toast-progress` and `.confirm-overlay/.confirm-card/.confirm-icon/.confirm-actions`. All tokens come from existing palette so light/dark themes work automatically. Danger variants reuse `--error` red.
+- `static/js/script.js`: "Limpar" button now uses `Notify.confirm` (danger) and follows up with a success toast before reload.
+- `templates/admin/dashboard.html` + `templates/admin/detail.html`: delete forms switched from `onsubmit="return confirm(...)"` to `data-confirm/...-title/...-text/...-danger` attrs.
+- Flash → toast bridge: `templates/index.html`, `templates/admin/dashboard.html`, `templates/admin/detail.html` render server-side `get_flashed_messages` into `Notify.toast(...)` calls on `DOMContentLoaded` (mapping `success → success`, `danger/error → error`, `warning → warning`, else `info`). On the landing page the legacy `.flash-stack` is removed after toasts are queued, avoiding double notification.
+- No more `alert()/confirm()/prompt()` anywhere in the codebase (verified by grep).

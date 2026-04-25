@@ -507,11 +507,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* ---------- Limpar ---------- */
     document.getElementById('btnLimpar').addEventListener('click', async function () {
-        if (!confirm('Tem certeza que deseja limpar todo o formulário? Isso também apaga o rascunho salvo.')) return;
+        const ok = await Notify.confirm({
+            title: 'Limpar todo o formulário?',
+            message: 'Todos os campos serão apagados, inclusive o rascunho salvo. Não dá para desfazer.',
+            confirmText: 'Sim, limpar tudo',
+            cancelText: 'Cancelar',
+            danger: true,
+        });
+        if (!ok) return;
         try {
             await fetch('/api/draft/clear', { method: 'POST', credentials: 'same-origin' });
+            Notify.success('Formulário limpo. Recarregando...');
         } catch (e) {}
-        window.location.reload();
+        setTimeout(() => window.location.reload(), 600);
     });
 
     /* ---------- Share modal ---------- */

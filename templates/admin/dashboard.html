@@ -124,7 +124,12 @@
                                 {% if s.status == 'completed' %}
                                 <a href="{{ url_for('admin_submission_pdf', sid=s.id) }}" title="Baixar PDF"><i class="fa-solid fa-file-pdf"></i></a>
                                 {% endif %}
-                                <form method="POST" action="{{ url_for('admin_submission_delete', sid=s.id) }}" class="inline-form" onsubmit="return confirm('Excluir o cadastro de {{ (s.nome or ('#' ~ s.id))|e }}? Essa ação não pode ser desfeita.');">
+                                <form method="POST" action="{{ url_for('admin_submission_delete', sid=s.id) }}" class="inline-form"
+      data-confirm="Excluir o cadastro de {{ s.nome or ('#' ~ s.id) }}? Essa ação não pode ser desfeita."
+      data-confirm-title="Excluir cadastro?"
+      data-confirm-text="Sim, excluir"
+      data-cancel-text="Cancelar"
+      data-confirm-danger="1">
                                     <input type="hidden" name="q" value="{{ request.args.get('q','') }}">
                                     <input type="hidden" name="status" value="{{ request.args.get('status','') }}">
                                     <button type="submit" class="row-action-danger" title="Excluir cadastro" aria-label="Excluir cadastro">
@@ -141,5 +146,20 @@
             </div>
         </section>
     </main>
+    <script src="/static/js/notify.js"></script>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                {% for category, message in messages %}
+                Notify.toast({
+                    type: {{ ('success' if category == 'success' else ('error' if category in ('danger','error') else ('warning' if category == 'warning' else 'info')))|tojson }},
+                    message: {{ message|tojson }},
+                });
+                {% endfor %}
+            });
+        </script>
+        {% endif %}
+    {% endwith %}
 </body>
 </html>
