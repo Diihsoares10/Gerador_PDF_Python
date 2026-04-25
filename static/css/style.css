@@ -811,13 +811,39 @@ body::after {
 .data-table .muted { color: var(--text-muted); font-size: 13px; }
 .data-table .empty { text-align: center; padding: 40px; color: var(--text-muted); }
 
-.row-actions { display: flex; gap: 12px; }
-.row-actions a {
+.row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    white-space: nowrap;
+}
+.row-actions > a,
+.row-actions > .inline-form,
+.row-actions > .inline-form > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    margin: 0;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+}
+.row-actions > a {
     color: var(--text-secondary);
     text-decoration: none;
-    transition: color var(--transition);
+    background: transparent;
+    border: 0;
+    transition: background var(--transition), color var(--transition);
 }
-.row-actions a:hover { color: var(--accent); }
+.row-actions > a:hover { background: var(--field-bg); color: var(--accent); }
+.row-actions > a:focus-visible { outline: 3px solid var(--accent-soft, var(--field-bg)); outline-offset: 2px; }
+.row-actions > .inline-form { background: transparent; }
 
 .badge {
     display: inline-flex; align-items: center; gap: 5px;
@@ -1376,15 +1402,15 @@ select.input option,
 /* ============================================================
    Admin — destructive actions (delete row / button)
    ============================================================ */
-.inline-form { display: inline-block; margin: 0; }
+.inline-form { display: inline-flex; align-items: center; margin: 0; padding: 0; }
 .row-action-danger {
     background: transparent;
     border: 0;
     color: var(--text-muted);
     cursor: pointer;
-    padding: 6px 8px;
     border-radius: 8px;
     font-size: 14px;
+    line-height: 1;
     transition: background var(--transition), color var(--transition);
 }
 .row-action-danger:hover { background: var(--error-bg); color: var(--error); }

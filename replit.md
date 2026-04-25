@@ -80,3 +80,13 @@ Flask-based web application for user registration with automatic PDF report gene
 - **CSV export** (`/admin/export.csv`): `criado_em/atualizado_em/concluido_em` agora são formatados como `dd/mm/aaaa HH:MM` em BRT via `_fmt_brt()`.
 - **templates/admin/dashboard.html**: coluna "Atualizado em" usa `{{ s.updated_at|localtime('%d/%m %H:%M') }}` (com tooltip mostrando o timestamp completo). **templates/admin/detail.html**: header usa `|localtime` e exibe "(horário de Brasília)" para deixar claro.
 - O backend continua armazenando UTC no banco — single source of truth — e a apresentação faz a conversão. Brasil aboliu o DST em 2019, então o offset é fixo em UTC-3 o ano inteiro.
+
+## Admin row-actions alignment fix (Apr 2026)
+- **Problem**: na coluna "Ações" do `/admin`, o ícone 👁 (visualizar), 📄 (PDF) e 🗑 (excluir) ficavam desalinhados. Os links `<a>` não tinham padding, mas o botão de excluir tinha `padding: 6px 8px`, e o `<form class="inline-form">` envolvendo o botão era `inline-block` com altura própria — resultado: três alturas diferentes na mesma linha.
+- **Fix em `static/css/style.css`**:
+  - `.row-actions` agora é `display: flex; align-items: center; gap: 6px; white-space: nowrap`.
+  - Todos os filhos diretos (`> a`, `> .inline-form`, `> .inline-form > button`) compartilham o mesmo gabarito: `34×34px`, `display: inline-flex`, `place-items: center`, `padding: 0`, `margin: 0`, `border-radius: 8px`, `box-sizing: border-box`. Isso garante que cada ação ocupe exatamente o mesmo quadrado.
+  - `.inline-form` virou `inline-flex` (não mais `inline-block`) para colapsar perfeitamente em torno do botão filho sem adicionar altura extra.
+  - `.row-action-danger` perdeu o `padding` (agora vem do gabarito 34×34) mas mantém hover em vermelho-claro.
+  - `.row-actions > a` ganhou hover suave (background `--field-bg`) para combinar visualmente com o hover do botão de excluir.
+- O resultado é uma fileira de botões-quadrado idênticos, centralizados verticalmente na linha da tabela, com espaçamento uniforme — funciona em todas as larguras porque o gabarito é fixo e o gap é controlado pelo flex.
