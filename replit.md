@@ -90,3 +90,20 @@ Flask-based web application for user registration with automatic PDF report gene
   - `.row-action-danger` perdeu o `padding` (agora vem do gabarito 34×34) mas mantém hover em vermelho-claro.
   - `.row-actions > a` ganhou hover suave (background `--field-bg`) para combinar visualmente com o hover do botão de excluir.
 - O resultado é uma fileira de botões-quadrado idênticos, centralizados verticalmente na linha da tabela, com espaçamento uniforme — funciona em todas as larguras porque o gabarito é fixo e o gap é controlado pelo flex.
+
+## PDF redesign — modern hero layout (Apr 2026)
+- **`pdf_generator.py` reescrito** para combinar com a identidade visual do site (paleta indigo + sky + teal). Mantém a mesma assinatura `gerar_pdf(dados) → BytesIO`, então `routes.py` não precisou mudar.
+- **Capa em hero band**: faixa indigo de altura fixa no topo de toda página (via `BaseDocTemplate` + `PageTemplate.onPage`), com:
+  - chip da marca (mesmo "feather" arredondado da home), nome "Cadastramento!" e tagline
+  - pílula verde "Cadastro completo" no canto direito
+  - título grande "Ficha de Cadastro" + linha com "Titular: Nome · CPF: 000…"
+  - timestamp de emissão alinhado à direita (em horário de Brasília via `BR_TZ`)
+  - listras teal+sky de baixo para reforçar o gradiente da marca
+- **Resumo destacado** (logo abaixo do hero) — card indigo claro com 4 mini-células (Cidade, UF, Data de nascimento, Idade) para bater o olho rapidamente.
+- **Seções com barra colorida** (`_section_header`): título em caixa-alta sobre fundo `#f1f5f9` com barra lateral colorida (indigo p/ Dados Pessoais, sky p/ Contato, teal p/ Endereço). Substitui o título azul centralizado antigo.
+- **Cards de informação** (`_info_table`): grid 2 colunas com label uppercase em cinza e valor em bold, fundo branco/slate-50 alternando, bordas suaves (`#e2e8f0`) sem grid pesado.
+- **Endereço** ganhou um bloco full-width (`_full_width_block`) só para o logradouro completo + linha 2x2 com CEP/Bairro/Cidade/UF.
+- **Carimbo de autenticidade** no rodapé do conteúdo, em card cinza-claro: "Documento gerado eletronicamente pelo sistema Cadastramento!. Os dados acima foram informados pelo próprio titular em DD/MM/AAAA às HH:MM (horário de Brasília)."
+- **Footer global**: linha divisória + "Documento gerado eletronicamente · Cadastramento!" à esquerda e "Página N" à direita em todas as páginas.
+- **Idade** agora usa cálculo correto de aniversário-passou (antes era só `ano_atual - ano_nascimento`, podia errar até 1 ano). Hoje atualizado também respeita BRT.
+- Página padronizada para **A4** (mais comum no Brasil que letter), márgens de 18 mm e topo reservado para o hero band (56 mm).
