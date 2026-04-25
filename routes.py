@@ -1,7 +1,7 @@
 """All HTTP routes for the form, autosave API and admin panel."""
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import (
     request,
@@ -61,10 +61,21 @@ def validar_cpf(cpf):
     return resto == int(cpf[10])
 
 
+def _fmt_brt(dt, fmt="%d/%m/%Y %H:%M"):
+    """Render a stored UTC datetime as Brasília time for exports/logs."""
+    if dt is None:
+        return ""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    from app import BR_TZ
+    return dt.astimezone(BR_TZ).strftime(fmt)
+
+
 def validar_idade(data_nascimento_str):
     try:
+        from app import BR_TZ
         data_nasc = datetime.strptime(data_nascimento_str, "%Y-%m-%d")
-        hoje = datetime.now()
+        hoje = datetime.now(BR_TZ)
         idade = hoje.year - data_nasc.year - (
             (hoje.month, hoje.day) < (data_nasc.month, data_nasc.day)
         )
@@ -152,7 +163,9 @@ def api_save_draft():
         {
             "ok": True,
             "progress": submission.progress,
-            "saved_at": submission.updated_at.isoformat() + "Z",
+            "saved_at": (submission.updated_at.replace(tzinfo=timezone.utc).isoformat()
+                         if submission.updated_at and submission.updated_at.tzinfo is None
+                         else (submission.updated_at.isoformat() if submission.updated_at else None)),
             "resume_token": submission.resume_token,
         }
     )
@@ -439,9 +452,9 @@ def admin_export_csv():
             d.get("telefone", ""),
             d.get("cidade", ""),
             d.get("estado", ""),
-            s.created_at.isoformat() if s.created_at else "",
-            s.updated_at.isoformat() if s.updated_at else "",
-            s.completed_at.isoformat() if s.completed_at else "",
+            _fmt_brt(s.created_at),
+            _fmt_brt(s.updated_at),
+            _fmt_brt(s.completed_at),
         ])
     csv_data = out.getvalue()
     return Response(

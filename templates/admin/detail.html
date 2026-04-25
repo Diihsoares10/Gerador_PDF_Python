@@ -48,8 +48,9 @@
                 <div>
                     <h1 style="margin:0; font-size:20px;">Detalhes do cadastro</h1>
                     <p style="margin:4px 0 0; color:var(--text-secondary); font-size:13px;">
-                        Criado em {{ s.created_at.strftime('%d/%m/%Y %H:%M') if s.created_at else '' }} ·
-                        Atualizado em {{ s.updated_at.strftime('%d/%m/%Y %H:%M') if s.updated_at else '' }}
+                        Criado em {{ s.created_at|localtime }} ·
+                        Atualizado em {{ s.updated_at|localtime }}
+                        <span class="muted" style="font-size:12px;">(horário de Brasília)</span>
                     </p>
                 </div>
                 <div>

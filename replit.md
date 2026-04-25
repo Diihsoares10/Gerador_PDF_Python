@@ -70,3 +70,13 @@ Flask-based web application for user registration with automatic PDF report gene
 - `templates/admin/dashboard.html` + `templates/admin/detail.html`: delete forms switched from `onsubmit="return confirm(...)"` to `data-confirm/...-title/...-text/...-danger` attrs.
 - Flash → toast bridge: `templates/index.html`, `templates/admin/dashboard.html`, `templates/admin/detail.html` render server-side `get_flashed_messages` into `Notify.toast(...)` calls on `DOMContentLoaded` (mapping `success → success`, `danger/error → error`, `warning → warning`, else `info`). On the landing page the legacy `.flash-stack` is removed after toasts are queued, avoiding double notification.
 - No more `alert()/confirm()/prompt()` anywhere in the codebase (verified by grep).
+
+## Timezone fix — display in Brasília time (Apr 2026)
+- **Root cause**: server stores `datetime.utcnow()` (UTC) in Postgres but the admin templates were rendering the raw value with `strftime`, so a cadastro feito às 21:34 BRT aparecia como "00:34" (3 h adiantado, equivalente ao UTC).
+- **app.py**: imports `from datetime import datetime, timezone` + `from zoneinfo import ZoneInfo`, defines `BR_TZ = ZoneInfo("America/Sao_Paulo")`, and registers two Jinja filters:
+  - `|localtime(fmt='%d/%m/%Y %H:%M')` — treats naive datetimes as UTC and converts to BRT before formatting.
+  - `|isoutc` — emits ISO-8601 com sufixo `Z` para que o JS converta para o fuso do navegador.
+- **routes.py**: added `_fmt_brt(dt, fmt)` helper. `validar_idade` agora calcula com `datetime.now(BR_TZ)` (antes usava `datetime.now()` do servidor, que em UTC podia atribuir um dia adiantado para usuários nascidos no fim do mês). The `/api/draft` payload now sends `saved_at` as ISO with explicit UTC offset so o JS faz a conversão local sem ambiguidade.
+- **CSV export** (`/admin/export.csv`): `criado_em/atualizado_em/concluido_em` agora são formatados como `dd/mm/aaaa HH:MM` em BRT via `_fmt_brt()`.
+- **templates/admin/dashboard.html**: coluna "Atualizado em" usa `{{ s.updated_at|localtime('%d/%m %H:%M') }}` (com tooltip mostrando o timestamp completo). **templates/admin/detail.html**: header usa `|localtime` e exibe "(horário de Brasília)" para deixar claro.
+- O backend continua armazenando UTC no banco — single source of truth — e a apresentação faz a conversão. Brasil aboliu o DST em 2019, então o offset é fixo em UTC-3 o ano inteiro.
